@@ -1,4 +1,4 @@
-name: Reusable checks
+name: Reusable version
 
 on:
   workflow_call:
@@ -10,12 +10,15 @@ on:
         type: string
 
 jobs:
-  checks:
-    name: Lint, typecheck
+  run:
+    name: Version
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: master
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -24,13 +27,20 @@ jobs:
 
       - name: Install
         run: yarn install
-
-      - name: Lint
-        run: yarn checks lint
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
-      - name: TypeCheck
-        run: yarn checks typecheck
+      - name: Version
+        run: yarn workspaces changed foreach --no-private --verbose version patch --deferred
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        with:
+          author_name: github-actions
+          author_email: github-bot@atls.team
+          message: 'chore(common): versions'
+          add: '*.yml'

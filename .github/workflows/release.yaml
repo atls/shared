@@ -1,4 +1,4 @@
-name: Reusable checks
+name: Reusable release
 
 on:
   workflow_call:
@@ -10,8 +10,8 @@ on:
         type: string
 
 jobs:
-  checks:
-    name: Lint, typecheck
+  release:
+    name: Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,12 +25,7 @@ jobs:
       - name: Install
         run: yarn install
 
-      - name: Lint
-        run: yarn checks lint
-        env:
-          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-
-      - name: TypeCheck
-        run: yarn checks typecheck
+      - name: Release
+        run: yarn checks release
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'

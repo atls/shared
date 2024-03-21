@@ -1,4 +1,4 @@
-name: Reusable checks
+name: Reusable tests
 
 on:
   workflow_call:
@@ -10,8 +10,7 @@ on:
         type: string
 
 jobs:
-  checks:
-    name: Lint, typecheck
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,12 +24,12 @@ jobs:
       - name: Install
         run: yarn install
 
-      - name: Lint
-        run: yarn checks lint
+      - name: Test unit
+        run: yarn checks test unit
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
-      - name: TypeCheck
-        run: yarn checks typecheck
+      - name: Test integration
+        run: yarn checks test integration
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
