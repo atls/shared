@@ -44,7 +44,7 @@ jobs:
           node-version: ${{ inputs.nodeVersion }}
 
       - name: Yarn install
-        run: yarn install --inline-builds --immutable --immutable-cache
+        run: yarn install --inline-builds
 
       - name: Install Buildpack CLI
         run: |
