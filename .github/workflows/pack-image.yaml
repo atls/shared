@@ -1,0 +1,67 @@
+name: Pack image
+
+on:
+  workflow_call:
+    inputs:
+      registryURL:
+        description: 'Where to publish built docker image. Github - `ghcr.io`. Yandex - `cr.yandex`'
+        required: true
+        type: string
+      registryUser:
+        description: 'How to authenticate user. For yandex - `oauth`, `iam`, `json_key`. For GitHub - repo owner'
+        type: string
+        required: true
+      project:
+        description: 'Project name for publishing to registry. For GitHub - repo name.'
+        type: string
+        required: true
+      imageNamePrefix:
+        description: 'Image name prefix'
+        required: false
+        type: string
+      nodeVersion:
+        description: 'Node version to run this workflow. Default: `18.19` as it is in action cache'
+        default: '18.19'
+        required: false
+        type: string
+    secrets:
+      registryKey:
+        required: true
+        description: 'Login key for registry'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.nodeVersion }}
+
+      - name: Yarn install
+        run: yarn install --inline-builds
+
+      - name: Install Buildpack CLI
+        run: |
+          (curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.23.0/pack-v0.23.0-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack)
+
+      - name: Login to registry
+        run: echo "$REGISTRY_KEY" | docker login $REGISTRY_URL -u $USERNAME --password-stdin
+        env:
+          REGISTRY_KEY: ${{ secrets.registryKey }}
+          USERNAME: ${{ inputs.registryUser }}
+          REGISTRY_URL: ${{ inputs.registryURL }}
+
+      - name: Pack and publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_URL: ${{ inputs.registryURL }}
+          PROJECT: ${{ inputs.project }}
+          IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
+        run: |
+          yarn workspaces changed foreach image pack --publish --tag-policy hash-timestamp --registry '$REGISTRY_URL/$PROJECT/$IMAGE_NAME_PREFIX'
