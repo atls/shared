@@ -30,6 +30,9 @@ jobs:
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
+      - name: List changed workspaces
+        run : yarn workspaces changed list
+
       - name: Version
         run: yarn workspaces changed foreach --no-private --verbose version patch --deferred
         env:
