@@ -22,20 +22,15 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
-      - name: Load .env file
-        uses: falti/dotenv-action@v1
-        with:
-          path: .env
-
       - name: Install
-        run: yarn install
+        run: yarn install --inline-builds
 
       - name: Lint
         run: yarn checks lint
         env:
-          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: TypeCheck
         run: yarn checks typecheck
         env:
-          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
