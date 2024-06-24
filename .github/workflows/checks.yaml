@@ -25,7 +25,7 @@ jobs:
       - name: Check .env file
         id: check_env
         run: |
-          if -f ".env"; then
+          if [ -f ".env" ]; then
             echo "LOAD_ENV=true" >> $GITHUB_OUTPUT
           fi
 
