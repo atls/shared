@@ -23,7 +23,6 @@ jobs:
           node-version: ${{ inputs.node-version }}
 
       - name: Load .env file
-        if: ${{ steps.check_env.outputs.LOAD_ENV == true }}
         uses: falti/dotenv-action@v1
         with:
           path: .env
