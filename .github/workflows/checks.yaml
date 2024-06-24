@@ -22,16 +22,9 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
-      - name: Check .env file
-        id: check_env
-        run: |
-          if [ -f ".env" ]; then
-            echo "LOAD_ENV=true" >> $GITHUB_OUTPUT
-          fi
-
       - name: Load .env file
         if: ${{ steps.check_env.outputs.LOAD_ENV == true }}
-        uses: falti/dotenv-action@v1.0.0
+        uses: falti/dotenv-action@v1
         with:
           path: .env
 
