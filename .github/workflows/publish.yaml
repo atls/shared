@@ -4,8 +4,8 @@ on:
   workflow_call:
     inputs:
       node-version:
-        description: 'Node version to run this workflow. Default: 18 as it is in action cache'
-        default: '18'
+        description: 'Node version to run this workflow. Default: 19'
+        default: '19'
         required: false
         type: string
     secrets:
