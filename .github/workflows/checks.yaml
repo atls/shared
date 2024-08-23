@@ -37,7 +37,7 @@ jobs:
       - name: Install
         run: yarn install --inline-builds
 
-      - name: Lint
+      - name: Checks
         run: yarn checks run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
