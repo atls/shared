@@ -66,7 +66,7 @@ jobs:
           (curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.23.0/pack-v0.23.0-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack)
 
       - name: Login to registry
-        run: echo "$REGISTRY_KEY" | docker login $REGISTRY_URL -u $USERNAME --password-stdin
+        run: echo -e "$REGISTRY_KEY" | docker login $REGISTRY_URL -u $USERNAME --password-stdin
         env:
           REGISTRY_KEY: ${{ secrets.registryKey }}
           USERNAME: ${{ inputs.registryUser }}
