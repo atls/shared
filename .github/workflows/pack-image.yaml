@@ -14,7 +14,7 @@ on:
       project:
         description: 'Project name for publishing to registry. For GitHub - repo name.'
         type: string
-        required: true
+        required: false
       imageNamePrefix:
         description: 'Image name prefix'
         required: false
@@ -28,6 +28,9 @@ on:
       registryKey:
         required: true
         description: 'Login key for registry'
+      project:
+        description: 'Project name for publishing to registry. For GitHub - repo name.'
+        required: true
 
 jobs:
   run:
@@ -73,7 +76,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REGISTRY_URL: ${{ inputs.registryURL }}
-          PROJECT: ${{ inputs.project }}
+          PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
           IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
         run: |
           yarn workspaces changed foreach image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT/$IMAGE_NAME_PREFIX"
