@@ -29,8 +29,8 @@ on:
         required: true
         description: 'Login key for registry'
       project:
+        required: false
         description: 'Project name for publishing to registry. For GitHub - repo name.'
-        required: true
 
 jobs:
   run:
