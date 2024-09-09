@@ -18,10 +18,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.ATLANTIS_SUPER_BOT_APP_ID }}
+          private-key: ${{ secrets.ATLANTIS_SUPER_BOT_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: master
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -41,24 +48,45 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Install
-        run: yarn install
+        run: yarn install --inline-builds
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
       - name: List changed workspaces
         run : yarn workspaces changed list
 
+      - name: Version
+        run: yarn workspaces changed foreach -vtp --no-private version patch -i
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Npm Publish
-        run: |
-          yarn version apply --all
-          yarn workspaces changed foreach --verbose --topological --no-private npm publish --access public
+        run: yarn workspaces changed foreach -vtp --no-private npm publish --access public
         env:
           YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
 
+      - name: Compose commit message
+        id: commit_message
+        run: |
+          INITIAL_MESSAGE=$'chore(common): versions\n\n'
+          temp_file=$(mktemp)
+          yarn workspaces changed foreach exec "echo \"\$npm_package_name:\$npm_package_version \" >> $temp_file"
+          MESSAGE=$(cat $temp_file)
+          echo $(cat $temp_file)
+          INITIAL_MESSAGE+=$MESSAGE
+          INITIAL_MESSAGE="${INITIAL_MESSAGE//'%'/' '}"
+          INITIAL_MESSAGE="${INITIAL_MESSAGE//$'\n'/' '}"
+          INITIAL_MESSAGE="${INITIAL_MESSAGE//$'\r'/' '}"
+          echo "commitMessage=$INITIAL_MESSAGE" >> $GITHUB_OUTPUT
+          echo $INITIAL_MESSAGE
+          rm $temp_file
+
       - name: Commit changes
-        uses: EndBug/add-and-commit@v9
+        uses: planetscale/ghcommit-action@v0.1.44
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
-          default_author: github_actions
-          author_email: github-bot@atls.team
-          message: 'chore(common): publish'
-          add: '["*.lock", "*.json", "*.yml"]'
+          repo: ${{ github.repository }}
+          branch: master
+          commit_message: ${{ steps.commit_message.outputs.commitMessage }}
+          file_pattern: '*.json *.md *.yaml *.yml *.lock'
