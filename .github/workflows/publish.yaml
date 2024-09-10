@@ -56,12 +56,12 @@ jobs:
         run: yarn workspaces changed list
 
       - name: Version
-        run: yarn workspaces changed foreach -vtpij 2 --no-private version patch -i
+        run: yarn workspaces changed foreach -vtpj 2 --no-private version patch -i
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Npm Publish
-        run: yarn workspaces changed foreach -vtpij 2 --no-private npm publish --access public
+        run: yarn workspaces changed foreach -vtpj 2 --no-private npm publish --access public
         env:
           YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
 
@@ -70,7 +70,7 @@ jobs:
         run: |
           INITIAL_MESSAGE=$'chore(common): versions\n\n'
           temp_file=$(mktemp)
-          yarn workspaces changed foreach exec "echo \"\$npm_package_name:\$npm_package_version \" >> $temp_file"
+          yarn workspaces changed foreach -vtpj 2 exec "echo \"\$npm_package_name:\$npm_package_version \" >> $temp_file"
           MESSAGE=$(cat $temp_file)
           echo $(cat $temp_file)
           INITIAL_MESSAGE+=$MESSAGE

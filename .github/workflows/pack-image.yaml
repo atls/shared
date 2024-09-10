@@ -90,4 +90,4 @@ jobs:
           PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
           IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
         run: |
-          yarn workspaces changed foreach -pij 2 image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT/$IMAGE_NAME_PREFIX"
+          yarn workspaces changed foreach -pj 2 image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT/$IMAGE_NAME_PREFIX"
