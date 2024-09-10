@@ -53,15 +53,15 @@ jobs:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
       - name: List changed workspaces
-        run : yarn workspaces changed list
+        run: yarn workspaces changed list
 
       - name: Version
-        run: yarn workspaces changed foreach -vtp --no-private version patch -i
+        run: yarn workspaces changed foreach -vtpi -j 2 --no-private version patch -i
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Npm Publish
-        run: yarn workspaces changed foreach -vtp --no-private npm publish --access public
+        run: yarn workspaces changed foreach -vtpi -j 2 --no-private npm publish --access public
         env:
           YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
 
