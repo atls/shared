@@ -66,11 +66,17 @@ jobs:
           (curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.23.0/pack-v0.23.0-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack)
 
       - name: Login to registry
-        run: echo -e "$REGISTRY_KEY" | docker login $REGISTRY_URL -u $USERNAME --password-stdin
+        run: |
+          if [[ $ESCAPE_CHARACTERS == "true" || $ESCAPE_CHARACTERS == true ]] ; then
+            echo -e "$REGISTRY_KEY" | docker login $REGISTRY_URL -u $USERNAME --password-stdin
+          else 
+            echo "$REGISTRY_KEY" | docker login $REGISTRY_URL -u $USERNAME --password-stdin
+          fi
         env:
           REGISTRY_KEY: ${{ secrets.registryKey }}
           USERNAME: ${{ inputs.registryUser }}
           REGISTRY_URL: ${{ inputs.registryURL }}
+          ESCAPE_CHARACTERS: ${{ inputs.escapeCharactersInKey }}
 
       - name: Pack and publish
         env:
