@@ -24,6 +24,11 @@ on:
         default: '19'
         required: false
         type: string
+      escapeCharactersInKey:
+        required: false
+        default: true
+        type: boolean
+        description: 'Login via echo -e. Default: true'
     secrets:
       registryKey:
         required: true
