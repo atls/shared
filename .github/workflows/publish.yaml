@@ -62,7 +62,7 @@ jobs:
         run: yarn workspaces changed list
 
       - name: Version
-        run: yarn workspaces changed foreach -vp --jobs=2 --no-private version patch -i
+        run: yarn workspaces changed foreach -vpj 2 --no-private version patch -i
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
