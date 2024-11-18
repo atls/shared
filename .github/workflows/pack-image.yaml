@@ -21,7 +21,7 @@ on:
         type: string
       nodeVersion:
         description: 'Node version to run this workflow. Default: 19'
-        default: '19'
+        default: '22'
         required: false
         type: string
       escapeCharactersInKey:
