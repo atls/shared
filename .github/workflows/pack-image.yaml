@@ -20,7 +20,7 @@ on:
         required: false
         type: string
       nodeVersion:
-        description: 'Node version to run this workflow. Default: 19'
+        description: 'Node version to run this workflow. Default: 22'
         default: '22'
         required: false
         type: string
