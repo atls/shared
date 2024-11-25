@@ -8,6 +8,11 @@ on:
         default: '22'
         required: false
         type: string
+      withPlaywright:
+        description: 'Should install playwright. Default: false'
+        default: false
+        required: false
+        type: boolean
 
 jobs:
   checks:
@@ -36,6 +41,10 @@ jobs:
 
       - name: Install
         run: yarn install --inline-builds
+
+      - name: Install
+        if: inputs.withPlaywright == true
+        run: yarn dlx playwright install --with-deps
 
       - name: Checks
         run: yarn checks run
