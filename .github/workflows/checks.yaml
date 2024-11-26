@@ -19,6 +19,12 @@ jobs:
     name: Checks
     runs-on: ubuntu-latest
     steps:
+      - name: Login to GHCR
+        run: echo $GITHUB_TOKEN | docker login ghcr.io -u $REPOSITORY_OWNER --password-stdin
+        env:
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Checkout
         uses: actions/checkout@v4
 
