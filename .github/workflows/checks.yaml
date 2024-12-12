@@ -8,11 +8,6 @@ on:
         default: '22'
         required: false
         type: string
-      withPlaywright:
-        description: 'Should install playwright. Default: false'
-        default: false
-        required: false
-        type: boolean
 
 jobs:
   checks:
@@ -49,8 +44,13 @@ jobs:
         run: yarn install --inline-builds
 
       - name: Install playwright
-        if: inputs.withPlaywright == true
-        run: yarn dlx playwright install --with-deps
+        run: |
+          if yarn why playwright 2>/dev/null | grep -q 'playwright'; then
+            echo "Playwright is present as a dependency. Installing..."
+            yarn dlx playwright install --with-deps
+          else
+            echo "Playwright is not listed as a dependency. Skipping installation."
+          fi
 
       - name: Checks
         run: yarn checks run
