@@ -38,7 +38,7 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Install
-        run: yarn install
+        run: yarn install --inline-builds
 
       - name: Update
         run: yarn set version atls
@@ -53,3 +53,5 @@ jobs:
           title: 'feat(common): update bundle'
           branch-suffix: random
           delete-branch: true
+          sign-commits: true
+          assignees: ${{ github.actor }}
