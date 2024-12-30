@@ -66,6 +66,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Changelog
+        if: ${{ !cancelled() }}
+        run: yarn workspaces changed foreach -vpj 2 changelog generate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release
+        if: ${{ !cancelled() }}
+        run: yarn workspaces changed foreach -vpj 2 release create
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Npm Publish
         if: ${{ !cancelled() }}
         run: yarn workspaces changed foreach -vpj 2 --no-private npm publish --access public
@@ -89,9 +101,14 @@ jobs:
           echo $INITIAL_MESSAGE
           rm $temp_file
 
+      - name: Stage all files
+        if: ${{ !cancelled() }}
+        run: |
+          git add '*.md'
+
       - name: Commit changes
         if: ${{ !cancelled() }}
-        uses: planetscale/ghcommit-action@v0.1.44
+        uses: planetscale/ghcommit-action@v0.1.2
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
