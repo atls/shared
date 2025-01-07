@@ -67,7 +67,7 @@ jobs:
 
       - name: Changelog
         if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -vpj 2 changelog --exclude . generate
+        run: yarn workspaces changed foreach -vpj 2 --exclude . changelog generate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
