@@ -48,11 +48,7 @@ jobs:
           REGISTRY_URL: ${{ inputs.registryURL }}
           ESCAPE_CHARACTERS: ${{ inputs.escapeCharactersInKey }}
         run: |
-          if [[ $ESCAPE_CHARACTERS == "true" || $ESCAPE_CHARACTERS == true ]] ; then
-            echo -e "$REGISTRY_KEY" | docker login $REGISTRY_URL -u $USERNAME --password-stdin
-          else 
-            echo "$REGISTRY_KEY" | docker login $REGISTRY_URL -u $USERNAME --password-stdin
-          fi
+          printf '%s' "$REGISTRY_KEY" | docker login $REGISTRY_URL -u $USERNAME --password-stdin
 
       - name: Checkout
         uses: actions/checkout@v4
