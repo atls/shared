@@ -1,0 +1,16 @@
+name: Get new branch name
+description: get new branch name with now date
+
+outputs:
+  branchName:
+    description: Get last merged PR author
+    value: ${{ steps.branch_name.outputs.branchName }}
+
+runs:
+  using: composite
+
+  steps:
+    - name: Get new branch name
+      shell: bash
+      id: branch_name
+      run: echo "branchName=feat/new-release-$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT

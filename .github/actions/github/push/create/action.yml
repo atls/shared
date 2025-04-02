@@ -1,0 +1,25 @@
+name: Git push
+description: gith push
+
+inputs:
+  targetDirectory:
+    default: tmp/target
+    description: TargetDirectory
+    required: true
+  githubToken:
+    description: GitHup token
+    required: true
+  branchName:
+    description: branchName
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+    - shell: bash
+      working-directory: ${{ inputs.targetDirectory }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.githubToken }}
+      run: |
+        git push --set-upstream origin ${{ inputs.branchName }}

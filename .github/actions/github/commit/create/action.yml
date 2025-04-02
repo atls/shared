@@ -1,0 +1,26 @@
+name: Create commit
+description: create commit
+
+inputs:
+  targetRepository:
+    description: Target repository to commit
+    required: true
+  githubToken:
+    description: GitHup token
+    required: true
+  branchName:
+    description: Branch to commit
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+    - name: Commit changes
+      uses: planetscale/ghcommit-action@v0.2.0
+      env:
+        GITHUB_TOKEN: ${{ inputs.githubToken }}
+      with:
+        repo: ${{ inputs.targetRepository }}
+        branch: ${{ inputs.branchName }}
+        commit_message: "feat: release"

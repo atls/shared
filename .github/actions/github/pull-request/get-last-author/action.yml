@@ -1,0 +1,31 @@
+name: Get last merget PullRequest author
+description: get last merget pull request author
+
+inputs:
+  sourceDirectory:
+    default: tmp/source
+    description: Commit author GitGup token
+    required: true
+  githubToken:
+    description: GitHup token
+    required: true
+
+outputs:
+  lastPrAuthor:
+    description: Get branch name
+    value: ${{ steps.pr_author.outputs.lastPrAuthor }}
+
+runs:
+  using: composite
+
+  steps:
+    - name: Get last merged PR author login
+      shell: bash
+      working-directory: ${{ inputs.sourceDirectory }}
+      id: pr_author
+      env:
+        GH_TOKEN: ${{ inputs.githubToken }}
+      run: |
+        PR_NUMBER=$(gh pr list --state merged --limit 1 --json number --jq '.[0].number')
+        LAST_PR_AUTHOR=$(gh pr view $PR_NUMBER --json author --jq '.author.login')
+        echo "lastPrAuthor=$LAST_PR_AUTHOR" >> $GITHUB_OUTPUT
