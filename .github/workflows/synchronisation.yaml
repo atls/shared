@@ -15,10 +15,8 @@ on:
         required: true
       sourceDirname:
         type: string
-        required: true
       targetDirname:
         type: string
-        required: true
       syncIgnore:
         type: string
         required: true
@@ -46,8 +44,8 @@ jobs:
       - uses: actions/create-github-app-token@v1
         id: appTokenStep
         with:
-          app-id: ${{ vars.PERSONACLICK_COURIER_ID }}
-          private-key: ${{ secrets.PERSONACLICK_COURIER_SECRET }}
+          app-id: ${{ inputs.appId }}
+          private-key: ${{ secrets.privateKey }}
           # TODO remove if not needed
           # owner: OwnerOrganization
 
@@ -64,60 +62,83 @@ jobs:
           token: ${{ steps.appTokenStep.outputs.token }}
           repository: ${{inputs.targetRepository}}
 
-      - uses: atls/shared/.github/actions/utils/fs/clean-dir@master
+      # TODO uncomment
+      # - uses: atls/shared/.github/actions/utils/fs/clean-dir@master
+      - uses: atls/shared/.github/actions/utils/fs/clean-dir@feat/synchronization-workflow
         with:
           targetDirectory: ${{ env.TARGET_TMP_DIR_PATH }}
           syncIgnore: ${{ inputs.syncIgnore }}
 
-      - uses: atls/shared/.github/actions/utils/fs/sync-dirs@master
+      # TODO uncomment
+      # - uses: atls/shared/.github/actions/utils/fs/sync-dirs@master
+      - uses: atls/shared/.github/actions/utils/fs/sync-dirs@feat/synchronization-workflow
         with:
           syncIgnore: ${{ inputs.syncIgnore }}
           targetDirectory: ${{ env.TARGET_TMP_DIR_PATH }}
           sourceDirectory: ${{ env.SOURCE_TMP_DIR_PATH }}
 
-      - uses: atls/shared/.github/actions/utils/fs/replace-file-content@master
+        # TODO uncomment
+        # - uses: atls/shared/.github/actions/utils/fs/replace-file-content@master
+      - uses: atls/shared/.github/actions/utils/fs/replace-file-content@feat/synchronization-workflow
         with:
           syncIgnore: ${{ inputs.syncIgnore }}
           targetDirectory: ${{ env.TARGET_TMP_DIR_PATH }}
           replacementExtentions: ${{ inputs.replacementExtentions }}
           replacementContents: ${{ inputs.replacementContents }}
 
-      - uses: atls/shared/.github/actions/utils/fs/rename-dirs@master
+        # TODO uncomment
+        # - uses: atls/shared/.github/actions/utils/fs/rename-dirs@master
+      - uses: atls/shared/.github/actions/utils/fs/rename-dirs@feat/synchronization-workflow
+        if: ${{ inputs.sourceDirname != '' && inputs.targetDirname != '' }}
         with:
           targetDirectory: ${{ env.TARGET_TMP_DIR_PATH }}
           sourceDirname: ${{ inputs.sourceDirname }}
           targetDirname: ${{ inputs.targetDirname }}
 
       # TODO why not delete tmp?
-      - uses: atls/shared/.github/actions/utils/fs/sync-dirs@master
+      # TODO uncomment
+      # - uses: atls/shared/.github/actions/utils/fs/sync-dirs@master
+      - uses: atls/shared/.github/actions/utils/fs/sync-dirs@feat/synchronization-workflow
         with:
           targetDirectory: ${{ env.TARGET_TMP_DIR_PATH }}
           sourceDirectory: .
 
-      - uses: atls/shared/.github/actions/github/pull-request/get-last-author@master
+        # TODO uncomment
+        # - uses: atls/shared/.github/actions/github/pull-request/get-last-author@master
+      - uses: atls/shared/.github/actions/github/pull-request/get-last-author@feat/synchronization-workflow
         id: lastPrAuthorStep
         with:
           githubToken: ${{ steps.appTokenStep.outputs.token }}
 
-      - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@master
+        # TODO uncomment
+        # - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@master
+      - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@feat/synchronization-workflow
         id: newBranchNameStep
 
-      - uses: atls/shared/.github/actions/github/checkout/new-branch@master
+        # TODO uncomment
+        # - uses: atls/shared/.github/actions/github/checkout/new-branch@master
+      - uses: atls/shared/.github/actions/github/checkout/new-branch@feat/synchronization-workflow
         with:
           branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
 
-      - uses: atls/shared/.github/actions/github/push/create@master
+        # TODO uncomment
+        # - uses: atls/shared/.github/actions/github/push/create@master
+      - uses: atls/shared/.github/actions/github/push/create@feat/synchronization-workflow
         with:
           branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
           githubToken: ${{ steps.appTokenStep.outputs.token }}
 
-      - uses: atls/shared/.github/actions/github/commit/create@master
+        # TODO uncomment
+        # - uses: atls/shared/.github/actions/github/commit/create@master
+      - uses: atls/shared/.github/actions/github/commit/create@feat/synchronization-workflow
         with:
           branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
           githubToken: ${{ steps.appTokenStep.outputs.token }}
           targetRepository: ${{ env.TARGET_REPO }}
 
-      - uses: atls/shared/.github/actions/github/pull-request/create@master
+        # TODO uncomment
+        # - uses: atls/shared/.github/actions/github/pull-request/create@master
+      - uses: atls/shared/.github/actions/github/pull-request/create@feat/synchronization-workflow
         with:
           githubToken: ${{ steps.appTokenStep.outputs.token }}
           lastPrAuthor: ${{ steps.lastPrAuthorStep.outputs.lastPrAuthor }}
