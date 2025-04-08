@@ -1,0 +1,27 @@
+name: Checkout new branch
+description: checkout new branch
+
+inputs:
+  targetDirectory:
+    description: working directory
+    default: tmp/target
+    required: true
+  branchName:
+    description: new branch name
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+    - name: Checkout new branch
+      shell: bash
+      working-directory: ${{ inputs.targetDirectory }}
+      run: |
+        git checkout -b ${{ inputs.branchName }}
+
+    - name: Push new branch
+      shell: bash
+      working-directory: ${{ inputs.targetDirectory }}
+      run: |
+        git push --set-upstream origin ${{ inputs.branchName }}

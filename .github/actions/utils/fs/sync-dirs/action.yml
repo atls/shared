@@ -1,0 +1,43 @@
+name: Sync directories
+description: synchronization directories with excludes
+
+inputs:
+  sourceDirectory:
+    description: working directory
+    default: tmp/source
+    required: true
+  targetDirectory:
+    description: working directory
+    default: tmp/target
+    required: true
+  syncIgnore:
+    description: working directory
+
+runs:
+  using: composite
+
+  steps:
+    - name: Sync files to remote repository
+      if: ${{ inputs.syncIgnore != '' }}
+      shell: bash
+      env:
+        SYNC_IGNORE: ${{ inputs.syncIgnore }}
+        SOURCE_TMP_DIR_PATH: ${{ inputs.sourceDirectory }}
+        TARGET_TMP_DIR_PATH: ${{ inputs.targetDirectory }}
+      run: |
+        IFS=',' read -r -a ignored_files <<< "$SYNC_IGNORE"
+
+        exclude_conditions=""
+        for ignored_file in "${ignored_files[@]}"; do
+          exclude_conditions=" $exclude_conditions --exclude \"$ignored_file\""
+        done
+
+        echo $exclude_conditions
+
+        eval rsync -av --progress "$SOURCE_TMP_DIR_PATH" "$TARGET_TMP_DIR_PATH" $exclude_conditions
+
+    - name: Sync files to remote repository
+      if: ${{ inputs.syncIgnore == '' }}
+      shell: bash
+      run: |
+        rsync -av --progress "${{ inputs.targetDirectory }}" "${{ inputs.sourceDirectory }}"

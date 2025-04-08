@@ -1,0 +1,127 @@
+name: Sync Android Repositories
+
+env:
+  TARGET_TMP_DIR_PATH: tmp/target/
+  SOURCE_TMP_DIR_PATH: tmp/source/
+
+on:
+  workflow_call:
+    inputs:
+      appId:
+        type: string
+        required: true
+      targetRepository:
+        type: string
+        required: true
+      targetOrganization:
+        type: string
+        required: true
+      sourceDirname:
+        type: string
+      targetDirname:
+        type: string
+      syncIgnore:
+        type: string
+        required: true
+        description: list of files to exclue, separated by ','
+        default: ".git,.idea,LICENSE,"
+      replacementExtentions:
+        type: string
+        required: true
+        description: list of extentions to replace, separated by ','
+        default: "*.ts,*.sh,*.yaml"
+      replacementContents:
+        type: string
+        required: true
+        description: list of contents to replace, separated by ',' and '|' - separate source target content\
+        default: "source:content:1|target:conten:1,source-content-1|target-content-1"
+    secrets:
+      privateKey:
+        required: true
+
+jobs:
+  run:
+    name: Synchronization
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: appTokenStep
+        with:
+          app-id: ${{ inputs.appId }}
+          private-key: ${{ secrets.privateKey }}
+          owner: ${{ inputs.targetOrganization }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.SOURCE_TMP_DIR_PATH }}
+          token: ${{ steps.appTokenStep.outputs.token }}
+
+      - name: Checkout remote repository
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.TARGET_TMP_DIR_PATH }}
+          token: ${{ steps.appTokenStep.outputs.token }}
+          repository: ${{inputs.targetRepository}}
+
+      - uses: atls/shared/.github/actions/utils/fs/clean-dir@master
+        with:
+          targetDirectory: ${{ env.TARGET_TMP_DIR_PATH }}
+          syncIgnore: ${{ inputs.syncIgnore }}
+
+      - uses: atls/shared/.github/actions/utils/fs/sync-dirs@master
+        with:
+          syncIgnore: ${{ inputs.syncIgnore }}
+          targetDirectory: ${{ env.TARGET_TMP_DIR_PATH }}
+          sourceDirectory: ${{ env.SOURCE_TMP_DIR_PATH }}
+
+      - uses: atls/shared/.github/actions/utils/fs/replace-file-content@master
+        with:
+          syncIgnore: ${{ inputs.syncIgnore }}
+          targetDirectory: ${{ env.TARGET_TMP_DIR_PATH }}
+          replacementExtentions: ${{ inputs.replacementExtentions }}
+          replacementContents: ${{ inputs.replacementContents }}
+
+      - uses: atls/shared/.github/actions/utils/fs/rename-dirs@master
+        if: ${{ inputs.sourceDirname != '' && inputs.targetDirname != '' }}
+        with:
+          targetDirectory: ${{ env.TARGET_TMP_DIR_PATH }}
+          sourceDirname: ${{ inputs.sourceDirname }}
+          targetDirname: ${{ inputs.targetDirname }}
+
+      - uses: atls/shared/.github/actions/utils/fs/sync-dirs@master
+        with:
+          targetDirectory: ${{ env.TARGET_TMP_DIR_PATH }}
+          sourceDirectory: .
+
+      - uses: atls/shared/.github/actions/github/pull-request/get-last-author@master
+        id: lastPrAuthorStep
+        with:
+          githubToken: ${{ steps.appTokenStep.outputs.token }}
+
+      - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@master
+        id: newBranchNameStep
+
+      - uses: atls/shared/.github/actions/github/checkout/new-branch@master
+        with:
+          branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
+
+      - name: debug files
+        run: |
+          ls -a
+
+      - name: git add
+        run: |
+          git add --all -- . ':!tmp/'
+
+      - uses: atls/shared/.github/actions/github/commit/create@master
+        with:
+          branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
+          githubToken: ${{ steps.appTokenStep.outputs.token }}
+          targetRepository: ${{ inputs.targetRepository }}
+
+      - uses: atls/shared/.github/actions/github/pull-request/create@master
+        with:
+          githubToken: ${{ steps.appTokenStep.outputs.token }}
+          lastPrAuthor: ${{ steps.lastPrAuthorStep.outputs.lastPrAuthor }}
+          branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
