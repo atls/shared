@@ -123,6 +123,10 @@ jobs:
         with:
           branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
 
+      - name: debug files
+        run: |
+          ls -a
+
         # TODO move to actions; excludeTmp - optional flag
       - name: git add
         run: |
