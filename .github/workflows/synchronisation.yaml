@@ -13,6 +13,9 @@ on:
       targetRepository:
         type: string
         required: true
+      targetOrganization:
+        type: string
+        required: true
       sourceDirname:
         type: string
       targetDirname:
@@ -46,8 +49,7 @@ jobs:
         with:
           app-id: ${{ inputs.appId }}
           private-key: ${{ secrets.privateKey }}
-          # TODO remove if not needed
-          # owner: OwnerOrganization
+          owner: ${{ inputs.targetOrganization }}
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -121,15 +123,20 @@ jobs:
         with:
           branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
 
-        # TODO uncomment
-        # - uses: atls/shared/.github/actions/github/push/create@master
-      - uses: atls/shared/.github/actions/github/push/create@feat/synchronization-workflow
-        with:
-          branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
-          githubToken: ${{ steps.appTokenStep.outputs.token }}
+        # TODO move to actions; excludeTmp - optional flag
+      - name: git add
+        run: |
+          git add --all -- . ':!tmp/'
 
-        # TODO uncomment
-        # - uses: atls/shared/.github/actions/github/commit/create@master
+          # TODO remove if not needed
+      #   # TODO uncomment
+      #   # - uses: atls/shared/.github/actions/github/push/create@master
+      # - uses: atls/shared/.github/actions/github/push/create@feat/synchronization-workflow
+      #   with:
+      #     branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
+      #     githubToken: ${{ steps.appTokenStep.outputs.token }}
+      # TODO uncomment
+      # - uses: atls/shared/.github/actions/github/commit/create@master
       - uses: atls/shared/.github/actions/github/commit/create@feat/synchronization-workflow
         with:
           branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
