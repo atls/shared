@@ -1,8 +1,8 @@
 name: Sync Android Repositories
 
 env:
-  TARGET_TMP_DIR_PATH: tmp/target
-  SOURCE_TMP_DIR_PATH: tmp/source
+  TARGET_TMP_DIR_PATH: tmp/target/
+  SOURCE_TMP_DIR_PATH: tmp/source/
 
 on:
   workflow_call:
