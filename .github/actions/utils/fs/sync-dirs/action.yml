@@ -40,4 +40,4 @@ runs:
       if: ${{ inputs.syncIgnore == '' }}
       shell: bash
       run: |
-        rsync -a "${{ inputs.targetDirectory }}" "${{ inputs.sourceDirectory }}"
+        rsync -av --progress "${{ inputs.targetDirectory }}" "${{ inputs.sourceDirectory }}"
