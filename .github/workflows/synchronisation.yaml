@@ -145,7 +145,7 @@ jobs:
         with:
           branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
           githubToken: ${{ steps.appTokenStep.outputs.token }}
-          targetRepository: ${{ env.TARGET_REPO }}
+          targetRepository: ${{ inputs.targetRepository }}
 
         # TODO uncomment
         # - uses: atls/shared/.github/actions/github/pull-request/create@master
