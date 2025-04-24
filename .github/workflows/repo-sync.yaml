@@ -37,9 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Prepare
-      # TODO uncomment
-      # - uses: atls/shared/.github/actions/sync/prepare@master
-      - uses: atls/shared/.github/actions/sync/prepare@feat/repo-sync
+      - uses: atls/shared/.github/actions/sync/prepare@master
         id: prepareSyncStep
         with:
           appId: ${{ inputs.appId }}
@@ -57,9 +55,7 @@ jobs:
         run: |
           yarn workspace @scripts/clean-directory process '${{ inputs.replacements }}' "$TARGET_TMP_ABS_PATH"
 
-      # TODO uncomment
-      # - uses: atls/shared/.github/actions/utils/fs/sync-dirs@master
-      - uses: atls/shared/.github/actions/utils/fs/sync-dirs@feat/repo-sync
+      - uses: atls/shared/.github/actions/utils/fs/sync-dirs@master
         with:
           targetDirectory: ${{ env.TARGET_TMP_PATH }}
           sourceDirectory: ${{ env.SOURCE_TMP_PATH }}
@@ -80,9 +76,7 @@ jobs:
         run: git diff
 
       # Prepare pull request
-      # TODO uncomment
-      # - uses: atls/shared/.github/actions/sync/prepare-pr@master
-      - uses: atls/shared/.github/actions/sync/prepare-pr@feat/repo-sync
+      - uses: atls/shared/.github/actions/sync/prepare-pr@master
         with:
           appToken: ${{ steps.prepareSyncStep.outputs.appTokenStep }}
           reviewerUsername: ${{ inputs.reviewerUsername }}

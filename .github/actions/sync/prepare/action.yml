@@ -52,12 +52,8 @@ runs:
       with:
         repository: ${{ env.WORKFLOW_REPO }}
         path: ${{ env.WORKFLOW_TMP_PATH }}
-        # TODO remove
-        ref: feat/repo-sync
 
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/js/prepare-js@master
-    - uses: atls/shared/.github/actions/js/prepare-js@feat/repo-sync
+    - uses: atls/shared/.github/actions/js/prepare-js@master
       with:
         nodeVersion: 22
         workingDirectory: ${{ env.WORKFLOW_TMP_PATH }}

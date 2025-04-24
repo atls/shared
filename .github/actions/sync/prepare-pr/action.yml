@@ -19,45 +19,33 @@ runs:
   using: composite
 
   steps:
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/github/pull-request/get-last-author@master
-    - uses: atls/shared/.github/actions/github/pull-request/get-last-author@feat/repo-sync
+    - uses: atls/shared/.github/actions/github/pull-request/get-last-author@master
       id: lastPrAuthorStep
       with:
         sourceDirectory: ${{ env.SOURCE_TMP_PATH }}
         githubToken: ${{ inputs.appToken }}
 
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@master
-    - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@feat/repo-sync
+    - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@master
       id: newBranchNameStep
 
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/git/checkout-new-branch@master
-    - uses: atls/shared/.github/actions/git/checkout-new-branch@feat/repo-sync
+    - uses: atls/shared/.github/actions/git/checkout-new-branch@master
       with:
         workingDirectory: ${{ env.TARGET_TMP_PATH }}
         branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
 
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/git/add@master
-    - uses: atls/shared/.github/actions/git/add@feat/repo-sync
+    - uses: atls/shared/.github/actions/git/add@master
       with:
         workingDirectory: ${{ env.TARGET_TMP_PATH }}
         excludeTmp: true
 
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/github/commit/create@master
-    - uses: atls/shared/.github/actions/github/commit/create@feat/repo-sync
+    - uses: atls/shared/.github/actions/github/commit/create@master
       with:
         workingDirectory: ${{ env.TARGET_TMP_PATH }}
         branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
         githubToken: ${{ inputs.appToken }}
         targetRepository: ${{ inputs.targetRepository }}
 
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/github/pull-request/create@master
-    - uses: atls/shared/.github/actions/github/pull-request/create@feat/repo-sync
+    - uses: atls/shared/.github/actions/github/pull-request/create@master
       with:
         reviewerUsername: ${{ inputs.reviewerUsername }}
         targetDirectory: ${{ env.TARGET_TMP_PATH }}
