@@ -1,0 +1,63 @@
+name: reusable repo sync workflow prepare enveronment
+description: checout to source, target and workflow repo, prepare nodejs enveronment and install dependencies; github app token on output
+
+inputs:
+  appId:
+    description: github app id
+    required: false
+    default: ""
+  appSecret:
+    description: github app secret
+    required: false
+    default: ""
+  repositoryOwner:
+    description: repo owner to sync
+    required: false
+    default: ""
+  targetRepository:
+    description: target repo to sync
+    required: false
+    default: ""
+
+outputs:
+  appTokenStep:
+    description: Github app token
+    value: ${{ steps.appTokenStep.outputs.token }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/create-github-app-token@v1
+      id: appTokenStep
+      with:
+        app-id: ${{ inputs.appId }}
+        private-key: ${{ inputs.appSecret }}
+        owner: ${{ inputs.repositoryOwner }}
+
+    - name: Checkout source repository
+      uses: actions/checkout@v4
+      with:
+        path: ${{ env.SOURCE_TMP_PATH }}
+        token: ${{ steps.appTokenStep.outputs.token }}
+
+    - name: Checkout target repository
+      uses: actions/checkout@v4
+      with:
+        path: ${{ env.TARGET_TMP_PATH }}
+        token: ${{ steps.appTokenStep.outputs.token }}
+        repository: ${{inputs.targetRepository}}
+
+    - name: Checkout workflow repo
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ env.WORKFLOW_REPO }}
+        path: ${{ env.WORKFLOW_TMP_PATH }}
+        # TODO remove
+        ref: feat/repo-sync
+
+    # TODO uncomment
+    # - uses: atls/shared/.github/actions/js/prepare-js@master
+    - uses: atls/shared/.github/actions/js/prepare-js@feat/repo-sync
+      with:
+        nodeVersion: 22
+        workingDirectory: ${{ env.WORKFLOW_TMP_PATH }}

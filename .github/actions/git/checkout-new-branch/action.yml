@@ -2,7 +2,7 @@ name: Checkout new branch
 description: checkout new branch
 
 inputs:
-  targetDirectory:
+  workingDirectory:
     description: working directory
     default: tmp/target
     required: true
@@ -16,12 +16,12 @@ runs:
   steps:
     - name: Checkout new branch
       shell: bash
-      working-directory: ${{ inputs.targetDirectory }}
+      working-directory: ${{ inputs.workingDirectory }}
       run: |
         git checkout -b ${{ inputs.branchName }}
 
     - name: Push new branch
       shell: bash
-      working-directory: ${{ inputs.targetDirectory }}
+      working-directory: ${{ inputs.workingDirectory }}
       run: |
         git push --set-upstream origin ${{ inputs.branchName }}

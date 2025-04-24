@@ -1,0 +1,28 @@
+name: Read replacements
+description: checkout and read replacements by path
+
+inputs:
+  replacementsPath:
+    description: path to replacements.yml
+    default: .github/workflows/constants/replacements.yml
+    required: false
+
+outputs:
+  replacements:
+    description: replacements in compact json format in string
+    value: ${{ steps.getReplacementsStep.outputs.replacements }}
+
+runs:
+  using: composite
+
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Read replacements from file
+      shell: bash
+      id: getReplacementsStep
+      run: |
+        REPLACEMENTS=$(yq eval -o=json . ${{ inputs.replacementsPath }} | jq -c)
+        echo "Replacements: $REPLACEMENTS"
+
+        echo "replacements=$REPLACEMENTS" >> $GITHUB_OUTPUT

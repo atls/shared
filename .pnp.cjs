@@ -13,11 +13,21 @@ const RAW_RUNTIME_STATE =
     {\
       "name": "shared",\
       "reference": "workspace:."\
+    },\
+    {\
+      "name": "@scripts/clean-directory",\
+      "reference": "workspace:scripts/clean-directory"\
+    },\
+    {\
+      "name": "@scripts/repo-replacement",\
+      "reference": "workspace:scripts/repo-replacement"\
     }\
   ],\
   "enableTopLevelFallback": true,\
   "ignorePatternData": "(^(?:\\\\.yarn\\\\/sdks(?:\\\\/(?!\\\\.{1,2}(?:\\\\/|$))(?:(?:(?!(?:^|\\\\/)\\\\.{1,2}(?:\\\\/|$)).)*?)|$))$)",\
   "fallbackExclusionList": [\
+    ["@scripts/clean-directory", ["workspace:scripts/clean-directory"]],\
+    ["@scripts/repo-replacement", ["workspace:scripts/repo-replacement"]],\
     ["shared", ["workspace:."]]\
   ],\
   "fallbackPool": [\
@@ -1482,6 +1492,24 @@ const RAW_RUNTIME_STATE =
           ["@rtsao/scc", "npm:1.1.0"]\
         ],\
         "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@scripts/clean-directory", [\
+      ["workspace:scripts/clean-directory", {\
+        "packageLocation": "./scripts/clean-directory/",\
+        "packageDependencies": [\
+          ["@scripts/clean-directory", "workspace:scripts/clean-directory"]\
+        ],\
+        "linkType": "SOFT"\
+      }]\
+    ]],\
+    ["@scripts/repo-replacement", [\
+      ["workspace:scripts/repo-replacement", {\
+        "packageLocation": "./scripts/repo-replacement/",\
+        "packageDependencies": [\
+          ["@scripts/repo-replacement", "workspace:scripts/repo-replacement"]\
+        ],\
+        "linkType": "SOFT"\
       }]\
     ]],\
     ["@sinclair/typebox", [\

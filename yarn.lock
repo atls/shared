@@ -964,6 +964,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@scripts/clean-directory@workspace:scripts/clean-directory":
+  version: 0.0.0-use.local
+  resolution: "@scripts/clean-directory@workspace:scripts/clean-directory"
+  languageName: unknown
+  linkType: soft
+
+"@scripts/repo-replacement@workspace:scripts/repo-replacement":
+  version: 0.0.0-use.local
+  resolution: "@scripts/repo-replacement@workspace:scripts/repo-replacement"
+  languageName: unknown
+  linkType: soft
+
 "@sinclair/typebox@npm:^0.27.8":
   version: 0.27.8
   resolution: "@sinclair/typebox@npm:0.27.8"

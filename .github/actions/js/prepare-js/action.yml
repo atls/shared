@@ -1,0 +1,39 @@
+name: Composite prepare JS action
+description: setup node, setup yarn cache, install node-deps
+
+inputs:
+  nodeVersion:
+    description: Node version to run this workflow. Default 22 as it is in action cache
+    default: "22"
+    required: false
+  workingDirectory:
+    required: false
+    default: ./
+    description: Where the script runs
+
+runs:
+  using: composite
+
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.nodeVersion }}
+
+    - name: Yarn cache directory
+      id: yarn-cache-dir-path
+      run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - uses: actions/cache@v4
+      id: yarn-cache
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Install
+      working-directory: ${{ inputs.workingDirectory }}
+      run: yarn install --inline-builds
+      shell: bash
