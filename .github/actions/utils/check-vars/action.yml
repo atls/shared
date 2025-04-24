@@ -1,0 +1,28 @@
+name: Check variables
+description: chech variables for prepare publish enveronment; needs checkouted workflow repo
+
+inputs:
+  workflowDirectory:
+    description: workflow directory
+    default: tmp/workflow
+    required: true
+  varsJson:
+    description: variables to check in json format
+    required: true
+  requiredVars:
+    description: list of required variables, devided by `,`
+
+runs:
+  using: composite
+
+  steps:
+    - name: Check workflow variables
+      shell: bash
+      working-directory: ${{ inputs.workflowDirectory }}
+      env:
+        JSON_DOC: ${{ inputs.varsJson }}
+      run: |
+        printf '%s\n' "$JSON_DOC" > temp.json
+        VARS=$(cat temp.json)
+
+        yarn workspace @scripts/check-vars process "$VARS" "${{ inputs.requiredVars }}"

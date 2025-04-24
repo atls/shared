@@ -1,0 +1,54 @@
+name: reusable repo sync workflow prepare pull request action
+description: get commit author; get new branch name; checkout and push new empty branch; git add; git commit; create pull request with inputs.reviewer
+
+inputs:
+  appToken:
+    description: github app token
+    required: false
+    default: ""
+  reviewerUsername:
+    description: pull request reviewer username
+    required: false
+    default: ""
+  targetRepository:
+    description: target repository to commit
+    required: false
+    default: ""
+
+runs:
+  using: composite
+
+  steps:
+    - uses: atls/shared/.github/actions/github/pull-request/get-last-author@master
+      id: lastPrAuthorStep
+      with:
+        sourceDirectory: ${{ env.SOURCE_TMP_PATH }}
+        githubToken: ${{ inputs.appToken }}
+
+    - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@master
+      id: newBranchNameStep
+
+    - uses: atls/shared/.github/actions/git/checkout-new-branch@master
+      with:
+        workingDirectory: ${{ env.TARGET_TMP_PATH }}
+        branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
+
+    - uses: atls/shared/.github/actions/git/add@master
+      with:
+        workingDirectory: ${{ env.TARGET_TMP_PATH }}
+        excludeTmp: true
+
+    - uses: atls/shared/.github/actions/github/commit/create@master
+      with:
+        workingDirectory: ${{ env.TARGET_TMP_PATH }}
+        branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
+        githubToken: ${{ inputs.appToken }}
+        targetRepository: ${{ inputs.targetRepository }}
+
+    - uses: atls/shared/.github/actions/github/pull-request/create@master
+      with:
+        reviewerUsername: ${{ inputs.reviewerUsername }}
+        targetDirectory: ${{ env.TARGET_TMP_PATH }}
+        githubToken: ${{ inputs.appToken }}
+        lastPrAuthor: ${{ steps.lastPrAuthorStep.outputs.lastPrAuthor }}
+        branchName: ${{ steps.newBranchNameStep.outputs.branchName }}

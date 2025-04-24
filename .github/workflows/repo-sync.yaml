@@ -1,0 +1,83 @@
+name: Reusable repository synchronization
+
+env:
+  WORKFLOW_REPO: atls/shared
+  WORKFLOW_TMP_PATH: tmp/workflow/
+  TARGET_TMP_PATH: tmp/target/
+  SOURCE_TMP_PATH: tmp/source/
+#
+on:
+  workflow_call:
+    secrets:
+      appSecret:
+        description: App secret for committing changes
+        required: true
+    inputs:
+      appId:
+        description: App ID for committing and pushing
+        required: true
+        type: string
+      replacements:
+        description: Replacements
+        required: true
+        type: string
+      targetRepository:
+        description: Target repository to sync
+        required: true
+        type: string
+      repositoryOwner:
+        type: string
+        required: true
+      reviewerUsername:
+        type: string
+        required: true
+
+jobs:
+  prepareSync:
+    runs-on: ubuntu-latest
+    steps:
+      # Prepare
+      - uses: atls/shared/.github/actions/sync/prepare@master
+        id: prepareSyncStep
+        with:
+          appId: ${{ inputs.appId }}
+          appSecret: ${{ secrets.appSecret }}
+          repositoryOwner: ${{ inputs.repositoryOwner }}
+          targetRepository: ${{ inputs.targetRepository }}
+
+      # Process
+      - name: Write absolute path to tmp dir to env
+        run: |
+          echo "TARGET_TMP_ABS_PATH=$GITHUB_WORKSPACE/${{ env.TARGET_TMP_PATH }}" >> $GITHUB_ENV
+
+      - name: Clean target directory
+        working-directory: ${{ env.WORKFLOW_TMP_PATH }}
+        run: |
+          yarn workspace @scripts/clean-directory process '${{ inputs.replacements }}' "$TARGET_TMP_ABS_PATH"
+
+      - uses: atls/shared/.github/actions/utils/fs/sync-dirs@master
+        with:
+          targetDirectory: ${{ env.TARGET_TMP_PATH }}
+          sourceDirectory: ${{ env.SOURCE_TMP_PATH }}
+
+      - name: Process replacements
+        working-directory: tmp/workflow
+        run: |
+          yarn workspace @scripts/repo-replacement process '${{ inputs.replacements }}' "$TARGET_TMP_ABS_PATH"
+
+      - name: Check for changes
+        working-directory: ${{ env.TARGET_TMP_PATH }}
+        run: |
+          git diff --quiet && echo "No changes foud" && exit 0
+          echo "Changes found"
+
+      - name: Log changes
+        working-directory: ${{ env.TARGET_TMP_PATH }}
+        run: git diff
+
+      # Prepare pull request
+      - uses: atls/shared/.github/actions/sync/prepare-pr@master
+        with:
+          appToken: ${{ steps.prepareSyncStep.outputs.appTokenStep }}
+          reviewerUsername: ${{ inputs.reviewerUsername }}
+          targetRepository: ${{ inputs.targetRepository }}

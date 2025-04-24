@@ -3,6 +3,9 @@
   "private": true,
   "license": "BSD 3-Clause",
   "type": "module",
+  "workspaces": [
+    "scripts/**"
+  ],
   "devDependencies": {
     "@atls/code-runtime": "1.1.0",
     "@jest/core": "29.7.0",
