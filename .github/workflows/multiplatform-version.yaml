@@ -54,13 +54,23 @@ jobs:
 
       - name: Check release published
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.githubToken || secrets.GITHUB_TOKEN }}
         run: |
           if [ "${NEW_RELEASE_PUBLISHED}" != "true" ]; then
-            echo "New release not published, exit"
-            exit 1
+            echo "New release not published, cancel workflow"
+            gh run cancel ${{ github.run_id }}
           fi
 
-      - uses: atls/shared/.github/actions/release/prepare-pr@master
+      - name: Debug git diff
+        id: git_diff
+        run: |
+          git diff --quiet || echo "has_changes=true" >> "$GITHUB_OUTPUT"
+
+      # TODO uncomment
+      # - uses: atls/shared/.github/actions/release/prepare-pr@master
+      - uses: atls/shared/.github/actions/release/prepare-pr@refactor/workflow
+        if: steps.git_diff.outputs.has_changes == 'true'
         with:
           reviewerUsername: ${{ inputs.reviewerUsername }}
           githubToken: ${{ steps.app-token.outputs.token }}
