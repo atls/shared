@@ -40,10 +40,6 @@ runs:
         githubToken: ${{ inputs.githubToken }}
         targetRepository: ${{ github.repository }}
 
-    - name: Add a short delay for stability
-      shell: bash
-      run: sleep 10s
-
     - uses: atls/shared/.github/actions/github/pull-request/create@master
       with:
         targetDirectory: .

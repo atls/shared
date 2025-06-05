@@ -1,0 +1,65 @@
+name: Release commit finder
+
+on:
+  workflow_call:
+    inputs:
+      fetchDepth:
+        description: Checkout fetch depth
+        default: 2
+        type: number
+        required: false
+      commitMessage:
+        description: Commit message to find
+        default: "release/"
+        type: string
+        required: false
+      cancelRunIfFound:
+        description: Abort workflow execution when the target commit is missing
+        default: true
+        type: boolean
+        required: false
+    secrets:
+      githubToken:
+        description: Github token to cancel workflow
+        required: false
+    outputs:
+      hasCommit:
+        description: "Has commit message"
+        value: ${{ jobs.check-commit-message.outputs.hasCommit }}
+
+jobs:
+  check-commit-message:
+    runs-on: ubuntu-latest
+    outputs:
+      hasCommit: ${{ steps.check-commit.outputs.hasCommit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ inputs.fetchDepth }}
+
+      - name: Check last commit message
+        id: check-commit
+        env:
+          GH_TOKEN: ${{ secrets.githubToken || secrets.GITHUB_TOKEN }}
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B HEAD)
+
+          if [[ "$COMMIT_MSG" == *"${{ inputs.commitMessage }}"* ]]; then
+            echo "Found commit from ${{ inputs.commitMessage }}: $COMMIT_MSG"
+            echo "hasCommit=true" >> $GITHUB_OUTPUT
+          else
+            echo "Commit from ${{ inputs.commitMessage }} branch has not found: $COMMIT_MSG"
+            echo "hasCommit=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Debug vars
+        run: |
+          echo "${{ inputs.cancelRunIfFound }}"
+          echo "${{ steps.check-commit.outputs.hasCommit }}"
+
+      - name: Cancel workflow
+        if: ${{ inputs.cancelRunIfFound && steps.check-commit.outputs.hasCommit == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh run cancel ${{ github.run_id }}

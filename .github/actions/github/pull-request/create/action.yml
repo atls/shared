@@ -34,25 +34,25 @@ runs:
 
   steps:
     - name: Create Pull Request
-      shell: bash
-      working-directory: ${{ inputs.targetDirectory }}
-      env:
-        GITHUB_TOKEN: ${{ inputs.githubToken }}
-        BRANCH_NAME: ${{ inputs.branchName }}
-        LAST_PR_AUTHOR: ${{ inputs.lastPrAuthor }}
-        REVIEWER: ${{ inputs.reviewerUsername }}
-      run: |
-        PR_TITLE="${{ inputs.prTitle }}"
-        PR_BODY="${{ inputs.prBody }}"
-        DEFAULT_BRANCH=$(gh repo view --json defaultBranchRef -q ".defaultBranchRef.name")
+      uses: peter-evans/create-pull-request@v7
+      id: cpr
+      with:
+        branch: ${{ inputs.branchName }}
+        commit-message: ${{ inputs.branchName }}
+        sign-commits: true
+        delete-branch: true
+        draft: false
+        token: ${{ inputs.githubToken }}
+        title: ${{ inputs.prTitle }}
+        body: ${{ inputs.prBody }}
+        base: ${{ github.event.repository.default_branch }}
+        assignees: ${{ inputs.lastPrAuthor || inputs.reviewerUsername }}
+        reviewers: ${{ inputs.reviewerUsername }}
 
-        echo "Assigning PR to LAST_PR_AUTHOR: $LAST_PR_AUTHOR"
-        echo "Adding REVIEWER: $REVIEWER as a reviewer"
-
-        gh pr create \
-          --title "$PR_TITLE" \
-          --body "$PR_BODY" \
-          --base "$DEFAULT_BRANCH" \
-          --head "$BRANCH_NAME" \
-          --assignee "$LAST_PR_AUTHOR" \
-          --reviewer "$REVIEWER"
+    - name: Enable Pull Request Automerge
+      if: steps.cpr.outputs.pull-request-operation == 'created'
+      uses: peter-evans/enable-pull-request-automerge@v3
+      with:
+        token: ${{ inputs.githubToken }}
+        pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+        merge-method: squash

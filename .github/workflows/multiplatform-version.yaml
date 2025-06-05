@@ -19,6 +19,9 @@ on:
       appSecret:
         description: App secret for committing changes
         required: true
+      githubToken:
+        description: Github app token
+        required: false
 
 jobs:
   run:
@@ -39,9 +42,15 @@ jobs:
 
       - uses: codfish/semantic-release-action@v3
         id: semanticReleaseStep
+        env:
+          GH_TOKEN: ${{ secrets.githubToken || steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         with:
           additional-packages: |
             ['@semantic-release/git', '@semantic-release/exec']
+
+      - name: Debug git diff
+        run: |
+          git diff
 
       - name: Check release published
         shell: bash

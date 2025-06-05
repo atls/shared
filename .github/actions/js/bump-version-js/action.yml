@@ -1,0 +1,59 @@
+name: Bump js version composite action
+description: patch versions of changed packages
+
+inputs:
+  private:
+    description: Should apply only to private?
+    required: false
+    default: "false"
+  checkChanges:
+    description: Should run 'yarn --since'?
+    required: false
+    default: "true"
+  token:
+    description: GitHub PAT
+    required: true
+  baseCommit:
+    description: Base commit for which to compare
+    required: true
+  exclude:
+    description: Which workspaces to exclude
+    required: false
+    default: "nothing"
+  workingDirectory:
+    required: false
+    default: ./
+    description: Where the script runs
+
+runs:
+  using: composite
+
+  steps:
+    - name: List changed workspaces
+      env:
+        BASE_COMMIT: ${{ inputs.baseCommit }}
+      working-directory: ${{ inputs.workingDirectory }}
+      run: yarn workspaces list --since=$BASE_COMMIT^
+      shell: bash
+
+    - name: Version
+      working-directory: ${{ inputs.workingDirectory }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        IS_PRIVATE: ${{ inputs.private }}
+        SHOULD_CHECK_CHANGES: ${{ inputs.checkChanges }}
+        BASE_COMMIT: ${{ inputs.baseCommit }}
+        EXCLUDE: ${{ inputs.exclude }}
+      run: |
+        if [ $IS_PRIVATE == 'false' ]; then
+          PRIVATE_FLAG="--no-private"
+        fi
+
+        if [ $SHOULD_CHECK_CHANGES == 'true' ]; then
+          CHANGES_FLAG="--since=$BASE_COMMIT^"
+          else
+          CHANGES_FLAG="--all"
+        fi
+
+        yarn workspaces foreach $CHANGES_FLAG $PRIVATE_FLAG --exclude=$EXCLUDE -v version patch --immediate
+      shell: bash
