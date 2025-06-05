@@ -4,14 +4,19 @@ on:
   workflow_call:
     inputs:
       node-version:
-        description: 'Node version to run this workflow. Default: 22'
-        default: '22'
+        description: "Node version to run this workflow. Default: 22"
+        default: "22"
         required: false
         type: string
       appId:
         required: true
         type: string
         description: App ID for committing changes
+      registryServer:
+        required: false
+        type: string
+        default: "https://registry.npmjs.org"
+        description: Where to send the package
     secrets:
       appPrivateKey:
         required: true
@@ -77,6 +82,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Force Yarn to use NPM Registry
+        run: |
+          yarn config set npmScopes.atls.npmRegistryServer ${{ inputs.registryServer }}
+          yarn config set npmRegistryServer ${{ inputs.registryServer }}
+        shell: bash
+
       - name: Npm Publish
         if: ${{ !cancelled() }}
         run: yarn workspaces changed foreach -vpj 2 --no-private --exclude . npm publish --access public
@@ -114,4 +125,4 @@ jobs:
           repo: ${{ github.repository }}
           branch: master
           commit_message: ${{ steps.commit_message.outputs.commitMessage }}
-          file_pattern: '*.json *.md *.yaml *.yml *.lock'
+          file_pattern: "*.json *.md *.yaml *.yml *.lock"
