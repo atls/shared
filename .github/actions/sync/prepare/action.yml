@@ -5,19 +5,19 @@ inputs:
   appId:
     description: github app id
     required: false
-    default: ""
+    default: ''
   appSecret:
     description: github app secret
     required: false
-    default: ""
+    default: ''
   repositoryOwner:
     description: repo owner to sync
     required: false
-    default: ""
+    default: ''
   targetRepository:
     description: target repo to sync
     required: false
-    default: ""
+    default: ''
 
 outputs:
   appTokenStep:

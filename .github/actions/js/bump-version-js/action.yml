@@ -5,11 +5,11 @@ inputs:
   private:
     description: Should apply only to private?
     required: false
-    default: "false"
+    default: 'false'
   checkChanges:
     description: Should run 'yarn --since'?
     required: false
-    default: "true"
+    default: 'true'
   token:
     description: GitHub PAT
     required: true
@@ -19,7 +19,7 @@ inputs:
   exclude:
     description: Which workspaces to exclude
     required: false
-    default: "nothing"
+    default: 'nothing'
   workingDirectory:
     required: false
     default: ./

@@ -11,7 +11,7 @@ inputs:
   exclude:
     description: Which workspaces to exclude
     required: false
-    default: "nothing"
+    default: 'nothing'
 
 runs:
   using: composite

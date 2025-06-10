@@ -59,7 +59,7 @@ runs:
         targetDirectory: .
         githubToken: ${{ inputs.githubToken }}
         lastPrAuthor: ${{ steps.lastPrAuthorStep.outputs.lastPrAuthor }}
-        prTitle: "Bump version to ${{ inputs.releaseVersion }}"
-        prBody: "Automated version bump"
+        prTitle: 'Bump version to ${{ inputs.releaseVersion }}'
+        prBody: 'Automated version bump'
         branchName: ${{ steps.createReleaseBranchStep.outputs.branchName }}
         reviewerUsername: ${{ inputs.reviewerUsername }}

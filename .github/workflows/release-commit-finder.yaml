@@ -10,7 +10,7 @@ on:
         required: false
       commitMessage:
         description: Commit message to find
-        default: "release/"
+        default: 'release/'
         type: string
         required: false
       cancelRunIfFound:
@@ -24,7 +24,7 @@ on:
         required: false
     outputs:
       hasCommit:
-        description: "Has commit message"
+        description: 'Has commit message'
         value: ${{ jobs.check-commit-message.outputs.hasCommit }}
 
 jobs:

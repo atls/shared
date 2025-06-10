@@ -5,15 +5,15 @@ inputs:
   appToken:
     description: github app token
     required: false
-    default: ""
+    default: ''
   reviewerUsername:
     description: pull request reviewer username
     required: false
-    default: ""
+    default: ''
   targetRepository:
     description: target repository to commit
     required: false
-    default: ""
+    default: ''
 
 runs:
   using: composite
@@ -30,7 +30,7 @@ runs:
     - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@refactor/workflow
       id: newBranchNameStep
       with:
-        baseBranchName: "sync"
+        baseBranchName: 'sync'
 
     - uses: atls/shared/.github/actions/git/checkout-new-branch@master
       with:

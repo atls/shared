@@ -3,7 +3,7 @@ description: get new branch name with now date
 
 inputs:
   baseBranchName:
-    default: "feat"
+    default: 'feat'
     description: Base branch name
     required: false
 
