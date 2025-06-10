@@ -37,9 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Prepare
-      # TODO uncomment
-      # - uses: atls/shared/.github/actions/sync/prepare@master
-      - uses: atls/shared/.github/actions/sync/prepare@refactor/workflow
+      - uses: atls/shared/.github/actions/sync/prepare@master
         id: prepareSyncStep
         with:
           appId: ${{ inputs.appId }}
@@ -78,9 +76,7 @@ jobs:
         run: git diff
 
       # Prepare pull request
-      # TODO uncomment
-      # - uses: atls/shared/.github/actions/sync/prepare-pr@master
-      - uses: atls/shared/.github/actions/sync/prepare-pr@refactor/workflow
+      - uses: atls/shared/.github/actions/sync/prepare-pr@master
         with:
           appToken: ${{ steps.prepareSyncStep.outputs.appTokenStep }}
           reviewerUsername: ${{ inputs.reviewerUsername }}

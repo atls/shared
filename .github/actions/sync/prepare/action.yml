@@ -50,8 +50,6 @@ runs:
     - name: Checkout workflow repo
       uses: actions/checkout@v4
       with:
-        # TODO rm
-        ref: refactor/workflow
         repository: ${{ env.WORKFLOW_REPO }}
         path: ${{ env.WORKFLOW_TMP_PATH }}
 

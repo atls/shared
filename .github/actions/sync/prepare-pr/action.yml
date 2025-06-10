@@ -25,9 +25,7 @@ runs:
         sourceDirectory: ${{ env.SOURCE_TMP_PATH }}
         githubToken: ${{ inputs.appToken }}
 
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@master
-    - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@refactor/workflow
+    - uses: atls/shared/.github/actions/github/utils/get-new-branch-name@master
       id: newBranchNameStep
       with:
         baseBranchName: 'sync'
@@ -37,22 +35,10 @@ runs:
         workingDirectory: ${{ env.TARGET_TMP_PATH }}
         branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
 
-    # TODO rm
-    - name: Debug git
-      working-directory: ${{ env.TARGET_TMP_PATH }}
-      shell: bash
-      run: git status
-
     - uses: atls/shared/.github/actions/git/add@master
       with:
         workingDirectory: ${{ env.TARGET_TMP_PATH }}
         excludeTmp: true
-
-    # TODO rm
-    - name: Debug git
-      working-directory: ${{ env.TARGET_TMP_PATH }}
-      shell: bash
-      run: git status
 
     - uses: atls/shared/.github/actions/github/commit/create@master
       with:
@@ -61,15 +47,7 @@ runs:
         githubToken: ${{ inputs.appToken }}
         targetRepository: ${{ inputs.targetRepository }}
 
-    # TODO rm
-    - name: Debug git
-      working-directory: ${{ env.TARGET_TMP_PATH }}
-      shell: bash
-      run: git status
-
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/github/pull-request/create@master
-    - uses: atls/shared/.github/actions/github/pull-request/create@refactor/workflow
+    - uses: atls/shared/.github/actions/github/pull-request/create@master
       with:
         reviewerUsername: ${{ inputs.reviewerUsername }}
         targetDirectory: ${{ env.TARGET_TMP_PATH }}

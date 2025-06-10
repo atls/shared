@@ -33,16 +33,12 @@ runs:
 
         echo "branchName=$branch" >> "$GITHUB_OUTPUT"
 
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/github/pull-request/get-last-author@master
-    - uses: atls/shared/.github/actions/github/pull-request/get-last-author@refactor/workflow
+    - uses: atls/shared/.github/actions/github/pull-request/get-last-author@master
       id: lastPrAuthorStep
       with:
         githubToken: ${{ inputs.githubToken }}
 
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/github/commit/create@master
-    - uses: atls/shared/.github/actions/github/commit/create@refactor/workflow
+    - uses: atls/shared/.github/actions/github/commit/create@master
       with:
         branchName: ${{ steps.createReleaseBranchStep.outputs.branchName }}
         githubToken: ${{ inputs.githubToken }}
@@ -52,9 +48,7 @@ runs:
       shell: bash
       run: sleep 10s
 
-    # TODO uncomment
-    # - uses: atls/shared/.github/actions/github/pull-request/create@master
-    - uses: atls/shared/.github/actions/github/pull-request/create@refactor/workflow
+    - uses: atls/shared/.github/actions/github/pull-request/create@master
       with:
         targetDirectory: .
         githubToken: ${{ inputs.githubToken }}
