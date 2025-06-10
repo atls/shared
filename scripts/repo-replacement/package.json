@@ -9,9 +9,6 @@
   "scripts": {
     "process": "yarn library build && yarn node ./dist/index.js"
   },
-  "dependencies": {
-    "@global/github-client": "workspace:*"
-  },
   "devDependencies": {
     "@types/node": "22.0.0"
   }
