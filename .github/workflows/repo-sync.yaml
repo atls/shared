@@ -37,7 +37,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Prepare
-      - uses: atls/shared/.github/actions/sync/prepare@master
+      # TODO uncomment
+      # - uses: atls/shared/.github/actions/sync/prepare@master
+      - uses: atls/shared/.github/actions/sync/prepare@refactor/workflow
         id: prepareSyncStep
         with:
           appId: ${{ inputs.appId }}
