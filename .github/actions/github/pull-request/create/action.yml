@@ -37,6 +37,7 @@ runs:
       uses: peter-evans/create-pull-request@v7
       id: cpr
       with:
+        path: ${{ inputs.targetDirectory || '.' }}
         branch: ${{ inputs.branchName }}
         commit-message: ${{ inputs.branchName }}
         sign-commits: true
@@ -49,10 +50,11 @@ runs:
         assignees: ${{ inputs.lastPrAuthor || inputs.reviewerUsername }}
         reviewers: ${{ inputs.reviewerUsername }}
 
-    - name: Enable Pull Request Automerge
-      if: steps.cpr.outputs.pull-request-operation == 'created'
-      uses: peter-evans/enable-pull-request-automerge@v3
-      with:
-        token: ${{ inputs.githubToken }}
-        pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
-        merge-method: squash
+    # TODO fix
+    # - name: Enable Pull Request Automerge
+    #   if: steps.cpr.outputs.pull-request-operation == 'created'
+    #   uses: peter-evans/enable-pull-request-automerge@v3
+    #   with:
+    #     token: ${{ inputs.githubToken }}
+    #     pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+    #     merge-method: squash

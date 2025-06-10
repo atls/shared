@@ -82,7 +82,6 @@ jobs:
       # - uses: atls/shared/.github/actions/sync/prepare-pr@master
       - uses: atls/shared/.github/actions/sync/prepare-pr@refactor/workflow
         with:
-          baseBranchName: sync
           appToken: ${{ steps.prepareSyncStep.outputs.appTokenStep }}
           reviewerUsername: ${{ inputs.reviewerUsername }}
           targetRepository: ${{ inputs.targetRepository }}

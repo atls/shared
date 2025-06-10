@@ -69,10 +69,10 @@ runs:
 
     # TODO uncomment
     # - uses: atls/shared/.github/actions/github/pull-request/create@master
-    # - uses: atls/shared/.github/actions/github/pull-request/create@refactor/workflow
-    #   with:
-    #     reviewerUsername: ${{ inputs.reviewerUsername }}
-    #     targetDirectory: ${{ env.TARGET_TMP_PATH }}
-    #     githubToken: ${{ inputs.appToken }}
-    #     lastPrAuthor: ${{ steps.lastPrAuthorStep.outputs.lastPrAuthor }}
-    #     branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
+    - uses: atls/shared/.github/actions/github/pull-request/create@refactor/workflow
+      with:
+        reviewerUsername: ${{ inputs.reviewerUsername }}
+        targetDirectory: ${{ env.TARGET_TMP_PATH }}
+        githubToken: ${{ inputs.appToken }}
+        lastPrAuthor: ${{ steps.lastPrAuthorStep.outputs.lastPrAuthor }}
+        branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
