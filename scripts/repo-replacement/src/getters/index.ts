@@ -1,1 +1,1 @@
-export * from "./arguments.getter.js";
+export * from './arguments.getter.js'

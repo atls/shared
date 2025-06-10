@@ -1,1 +1,1 @@
-import "./entrypoint.js";
+import './entrypoint.js'
