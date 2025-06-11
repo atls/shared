@@ -1,0 +1,20 @@
+name: Find last tag commin
+description: Find las tag and return this commit hash
+
+outputs:
+  lastTagCommit:
+    description: Last tag commit hash
+    value: ${{ steps.lastTagCommit.outputs.lastTagCommit }}
+
+runs:
+  using: composite
+
+  steps:
+    - name: Find last tag commit
+      shell: bash
+      id: lastTagCommit
+      run: |
+        LAST_TAG=$(git describe --tags --abbrev=0)
+        COMMIT_HASH=$(git rev-list -n 1 $LAST_TAG)
+        echo "The last tag hash is $COMMIT_HASH"
+        echo "lastTagCommit=$COMMIT_HASH" >> $GITHUB_OUTPUT

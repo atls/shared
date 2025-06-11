@@ -65,17 +65,32 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debug git diff
+        run: |
+          git diff
+
       - name: Changelog
         if: ${{ !cancelled() }}
         run: yarn workspaces changed foreach -vpj 2 --exclude . changelog generate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debug git diff
+        run: |
+          git diff
+
       - name: Release
         if: ${{ !cancelled() }}
         run: yarn workspaces changed foreach -vpj 2 --exclude . release create
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Force Yarn to use NPM Registry
+        if: ${{ !cancelled() }}
+        run: |
+          yarn config set npmScopes.atls.npmRegistryServer ${{ inputs.registryServer }}
+          yarn config set npmRegistryServer ${{ inputs.registryServer }}
+        shell: bash
 
       - name: Npm Publish
         if: ${{ !cancelled() }}

@@ -1,0 +1,27 @@
+name: Generate changelog
+description: Generate changelog
+
+inputs:
+  githubToken:
+    description: GitHub token
+    required: true
+  baseCommit:
+    description: base commit hash since generate changelog
+    required: true
+  exclude:
+    description: Which workspaces to exclude
+    required: false
+    default: 'nothing'
+
+runs:
+  using: composite
+
+  steps:
+    - name: Generate changelog
+      shell: bash
+      working-directory: ${{ inputs.workingDirectory }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.githubToken }}
+        BASE_COMMIT: ${{ inputs.baseCommit }}
+        EXCLUDE: ${{ inputs.exclude }}
+      run: yarn workspaces foreach --since=$BASE_COMMIT^ --exclude=$EXCLUDE -vp --jobs=2 run changelog

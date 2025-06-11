@@ -11,21 +11,31 @@ inputs:
   reviewerUsername:
     description: pull-request reviewer username
     required: true
+  baseBranchName:
+    description: base branch name - release or sync usually
+    default: release
+    required: false
 
 runs:
   using: composite
 
   steps:
-    - uses: atls/shared/.github/actions/git/create-release-branch@master
+    - name: Create release branch
+      shell: bash
       id: createReleaseBranchStep
-      with:
-        githubToken: ${{ inputs.githubToken }}
-        releaseVersion: ${{ inputs.releaseVersion }}
+      run: |
+        set -e
+
+        branch="${{ inputs.baseBranchName }}/${{ inputs.releaseVersion }}"
+        git fetch origin
+        git switch -c "$branch"
+        git push origin "$branch"
+
+        echo "branchName=$branch" >> "$GITHUB_OUTPUT"
 
     - uses: atls/shared/.github/actions/github/pull-request/get-last-author@master
       id: lastPrAuthorStep
       with:
-        sourceDirectory: .
         githubToken: ${{ inputs.githubToken }}
 
     - uses: atls/shared/.github/actions/github/commit/create@master
@@ -33,14 +43,17 @@ runs:
         branchName: ${{ steps.createReleaseBranchStep.outputs.branchName }}
         githubToken: ${{ inputs.githubToken }}
         targetRepository: ${{ github.repository }}
-        filePattern: version.properties
+
+    - name: Add a short delay for stability
+      shell: bash
+      run: sleep 10s
 
     - uses: atls/shared/.github/actions/github/pull-request/create@master
       with:
         targetDirectory: .
         githubToken: ${{ inputs.githubToken }}
         lastPrAuthor: ${{ steps.lastPrAuthorStep.outputs.lastPrAuthor }}
-        prTitle: "Bump version to ${{ inputs.releaseVersion }}"
-        prBody: "Automated version bump"
-        branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
+        prTitle: 'Bump version to ${{ inputs.releaseVersion }}'
+        prBody: 'Automated version bump'
+        branchName: ${{ steps.createReleaseBranchStep.outputs.branchName }}
         reviewerUsername: ${{ inputs.reviewerUsername }}

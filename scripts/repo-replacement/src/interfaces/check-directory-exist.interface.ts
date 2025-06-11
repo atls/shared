@@ -1,1 +1,1 @@
-export type CheckDirectoryExistType = (dirPath: string) => void;
+export type CheckDirectoryExistType = (dirPath: string) => void
