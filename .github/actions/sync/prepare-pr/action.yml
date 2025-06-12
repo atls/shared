@@ -47,10 +47,13 @@ runs:
         githubToken: ${{ inputs.appToken }}
         targetRepository: ${{ inputs.targetRepository }}
 
-    - uses: atls/shared/.github/actions/github/pull-request/create@master
+    # TODO rm
+    # - uses: atls/shared/.github/actions/github/pull-request/create@master
+    - uses: atls/shared/.github/actions/github/pull-request/create@refactor/workflow
       with:
         reviewerUsername: ${{ inputs.reviewerUsername }}
         targetDirectory: ${{ env.TARGET_TMP_PATH }}
         githubToken: ${{ inputs.appToken }}
         lastPrAuthor: ${{ steps.lastPrAuthorStep.outputs.lastPrAuthor }}
         branchName: ${{ steps.newBranchNameStep.outputs.branchName }}
+        commitMessage: 'feat(release): sync'
