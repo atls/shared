@@ -28,6 +28,9 @@ inputs:
   branchName:
     description: git branch name
     required: true
+  commitMessage:
+    description: git commit message
+    required: true
 
 runs:
   using: composite
@@ -39,7 +42,7 @@ runs:
       with:
         path: ${{ inputs.targetDirectory || '.' }}
         branch: ${{ inputs.branchName }}
-        commit-message: ${{ inputs.branchName }}
+        commit-message: ${{ inputs.commitMessage }}
         sign-commits: true
         delete-branch: true
         draft: false
