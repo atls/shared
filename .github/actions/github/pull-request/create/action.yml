@@ -42,7 +42,7 @@ runs:
       with:
         path: ${{ inputs.targetDirectory || '.' }}
         branch: ${{ inputs.branchName }}
-        commit-message: ${{ inputs.commitMessage }}
+        commit-message: ${{ inputs.commitMessage || 'Automated commit message' }}
         sign-commits: true
         delete-branch: true
         draft: false
@@ -53,11 +53,10 @@ runs:
         assignees: ${{ inputs.lastPrAuthor || inputs.reviewerUsername }}
         reviewers: ${{ inputs.reviewerUsername }}
 
-    # TODO fix
-    # - name: Enable Pull Request Automerge
-    #   if: steps.cpr.outputs.pull-request-operation == 'created'
-    #   uses: peter-evans/enable-pull-request-automerge@v3
-    #   with:
-    #     token: ${{ inputs.githubToken }}
-    #     pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
-    #     merge-method: squash
+    - name: Enable Pull Request Automerge
+      if: steps.cpr.outputs.pull-request-operation == 'created'
+      uses: peter-evans/enable-pull-request-automerge@v3
+      with:
+        token: ${{ inputs.githubToken }}
+        pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+        merge-method: squash
