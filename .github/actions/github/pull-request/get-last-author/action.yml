@@ -3,7 +3,7 @@ description: get last merget pull request author
 
 inputs:
   sourceDirectory:
-    default: tmp/source
+    default: .
     description: Commit author GitGup token
     required: true
   githubToken:

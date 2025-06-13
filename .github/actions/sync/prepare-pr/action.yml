@@ -47,9 +47,7 @@ runs:
         githubToken: ${{ inputs.appToken }}
         targetRepository: ${{ inputs.targetRepository }}
 
-    # TODO rm
-    # - uses: atls/shared/.github/actions/github/pull-request/create@master
-    - uses: atls/shared/.github/actions/github/pull-request/create@refactor/workflow
+    - uses: atls/shared/.github/actions/github/pull-request/create@master
       with:
         reviewerUsername: ${{ inputs.reviewerUsername }}
         targetDirectory: ${{ env.TARGET_TMP_PATH }}

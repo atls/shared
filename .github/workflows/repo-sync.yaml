@@ -76,9 +76,7 @@ jobs:
         run: git diff
 
       # Prepare pull request
-      # TODO rm
-      # - uses: atls/shared/.github/actions/sync/prepare-pr@master
-      - uses: atls/shared/.github/actions/sync/prepare-pr@refactor/workflow
+      - uses: atls/shared/.github/actions/sync/prepare-pr@master
         with:
           appToken: ${{ steps.prepareSyncStep.outputs.appTokenStep }}
           reviewerUsername: ${{ inputs.reviewerUsername }}
