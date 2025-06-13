@@ -53,6 +53,6 @@ runs:
         lastPrAuthor: ${{ steps.lastPrAuthorStep.outputs.lastPrAuthor }}
         prTitle: 'Bump version to ${{ inputs.releaseVersion }}'
         prBody: 'Automated version bump'
-        commitMessage: ${{ steps.createReleaseBranchStep.outputs.branchName }}
+        commitMessage: 'feat(release): version'
         branchName: ${{ steps.createReleaseBranchStep.outputs.branchName }}
         reviewerUsername: ${{ inputs.reviewerUsername }}
