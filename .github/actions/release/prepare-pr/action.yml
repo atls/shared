@@ -38,15 +38,13 @@ runs:
       with:
         githubToken: ${{ inputs.githubToken }}
 
-    - uses: atls/shared/.github/actions/github/commit/create@master
-      with:
-        branchName: ${{ steps.createReleaseBranchStep.outputs.branchName }}
-        githubToken: ${{ inputs.githubToken }}
-        targetRepository: ${{ github.repository }}
-
-    - name: Add a short delay for stability
+    - name: Debig git
       shell: bash
-      run: sleep 10s
+      run: ls -la .git/objects
+
+    - uses: atls/shared/.github/actions/git/wait-available-branch@master
+      with:
+        branchToCheck: ${{ steps.createReleaseBranchStep.outputs.branchName }}
 
     - uses: atls/shared/.github/actions/github/pull-request/create@master
       with:
@@ -55,5 +53,6 @@ runs:
         lastPrAuthor: ${{ steps.lastPrAuthorStep.outputs.lastPrAuthor }}
         prTitle: 'Bump version to ${{ inputs.releaseVersion }}'
         prBody: 'Automated version bump'
+        commitMessage: ${{ steps.createReleaseBranchStep.outputs.branchName }}
         branchName: ${{ steps.createReleaseBranchStep.outputs.branchName }}
         reviewerUsername: ${{ inputs.reviewerUsername }}
