@@ -4,13 +4,13 @@
   "license": "BSD 3-Clause",
   "type": "module",
   "workspaces": [
-    "scripts/**"
+    "scripts/**/*"
   ],
   "devDependencies": {
-    "@atls/code-runtime": "1.1.0",
+    "@atls/code-runtime": "2.1.9",
     "@jest/core": "29.7.0",
     "@types/node": "20.14.8",
-    "typescript": "5.4.2"
+    "typescript": "5.5.4"
   },
-  "packageManager": "yarn@4.1.1"
+  "packageManager": "yarn@4.9.2"
 }

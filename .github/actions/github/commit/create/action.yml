@@ -17,13 +17,13 @@ inputs:
     description: Branch to commit
     required: true
   commitMessage:
-    default: "feat: release"
+    default: 'feat: release'
     description: commit message
     required: false
   filePattern:
     description: File pattern used for `git add`. For example `src/*.js`
     required: false
-    default: "."
+    default: '.'
 
 runs:
   using: composite

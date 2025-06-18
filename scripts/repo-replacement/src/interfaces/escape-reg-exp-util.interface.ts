@@ -1,1 +1,1 @@
-export type EscapeRegExpUtilType = (string: string) => string;
+export type EscapeRegExpUtilType = (string: string) => string

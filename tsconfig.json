@@ -26,5 +26,5 @@
     "strictPropertyInitialization": false,
     "outDir": "./dist"
   },
-  "include": ["project.types.d.ts"]
+  "include": ["project.types.d.ts", "scripts/**/*"]
 }

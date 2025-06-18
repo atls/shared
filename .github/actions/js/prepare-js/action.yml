@@ -4,7 +4,7 @@ description: setup node, setup yarn cache, install node-deps
 inputs:
   nodeVersion:
     description: Node version to run this workflow. Default 22 as it is in action cache
-    default: "22"
+    default: '22'
     required: false
   workingDirectory:
     required: false

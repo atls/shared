@@ -8,5 +8,8 @@
   },
   "scripts": {
     "process": "yarn library build && yarn node ./dist/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "22.0.0"
   }
 }

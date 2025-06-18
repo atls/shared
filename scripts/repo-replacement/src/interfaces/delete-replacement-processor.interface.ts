@@ -1,8 +1,6 @@
 interface DeleteReplacementProcessorProps {
-  targetDir: string;
-  deletions: Array<string>;
+  targetDir: string
+  deletions: Array<string>
 }
 
-export type DeleteReplacementProcessorType = (
-  props: DeleteReplacementProcessorProps,
-) => void;
+export type DeleteReplacementProcessorType = (props: DeleteReplacementProcessorProps) => void

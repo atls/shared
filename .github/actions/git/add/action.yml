@@ -5,7 +5,7 @@ inputs:
   excludeTmp:
     description: Esclude tmp dir - boolean
     required: false
-    default: ""
+    default: ''
   workingDirectory:
     description: Working directory
     required: false

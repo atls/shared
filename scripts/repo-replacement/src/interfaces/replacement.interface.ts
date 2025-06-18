@@ -1,4 +1,4 @@
 export interface Replacement {
-  from: string;
-  to: string;
+  from: string
+  to: string
 }
