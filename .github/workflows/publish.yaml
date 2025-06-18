@@ -38,8 +38,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # TODO rm
-          # ref: master
+          ref: master
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
@@ -66,80 +65,73 @@ jobs:
       - name: List changed workspaces
         run: yarn workspaces changed list
 
-      # TODO rm
+      - name: Version
+        run: yarn workspaces changed foreach -vpj 2 --no-private --exclude . version patch -i
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Debug git diff
+        run: |
+          git diff
+
+      - name: Changelog
+        if: ${{ !cancelled() }}
+        run: yarn workspaces changed foreach -vpj 2 --exclude . changelog generate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Debug git diff
+        run: |
+          git diff
+
+      - name: Release
+        if: ${{ !cancelled() }}
+        run: yarn workspaces changed foreach -vpj 2 --exclude . release create
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Force Yarn to use NPM Registry
+        if: ${{ !cancelled() }}
+        run: |
+          yarn config set npmScopes.atls.npmRegistryServer ${{ inputs.registryServer }}
+          yarn config set npmRegistryServer ${{ inputs.registryServer }}
+        shell: bash
+
       - name: Npm Publish
         if: ${{ !cancelled() }}
-        run: yarn workspace @atls/figma-theme-cli npm publish --access public
+        run: yarn workspaces changed foreach -vpj 2 --no-private --exclude . npm publish --access public
         env:
           YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
 
-      # - name: Version
-      #   run: yarn workspaces changed foreach -vpj 2 --no-private --exclude . version patch -i
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #
-      # - name: Debug git diff
-      #   run: |
-      #     git diff
-      #
-      # - name: Changelog
-      #   if: ${{ !cancelled() }}
-      #   run: yarn workspaces changed foreach -vpj 2 --exclude . changelog generate
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #
-      # - name: Debug git diff
-      #   run: |
-      #     git diff
-      #
-      # - name: Release
-      #   if: ${{ !cancelled() }}
-      #   run: yarn workspaces changed foreach -vpj 2 --exclude . release create
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #
-      # - name: Force Yarn to use NPM Registry
-      #   if: ${{ !cancelled() }}
-      #   run: |
-      #     yarn config set npmScopes.atls.npmRegistryServer ${{ inputs.registryServer }}
-      #     yarn config set npmRegistryServer ${{ inputs.registryServer }}
-      #   shell: bash
-      #
-      # - name: Npm Publish
-      #   if: ${{ !cancelled() }}
-      #   run: yarn workspaces changed foreach -vpj 2 --no-private --exclude . npm publish --access public
-      #   env:
-      #     YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
-      #
-      # - name: Compose commit message
-      #   if: ${{ !cancelled() }}
-      #   id: commit_message
-      #   run: |
-      #     INITIAL_MESSAGE=$'chore(common): versions\n\n'
-      #     temp_file=$(mktemp)
-      #     yarn workspaces changed foreach -vpj 2 --exclude . exec "echo \"\$npm_package_name:\$npm_package_version \" >> $temp_file"
-      #     MESSAGE=$(cat $temp_file)
-      #     echo $(cat $temp_file)
-      #     INITIAL_MESSAGE+=$MESSAGE
-      #     INITIAL_MESSAGE="${INITIAL_MESSAGE//'%'/' '}"
-      #     INITIAL_MESSAGE="${INITIAL_MESSAGE//$'\n'/' '}"
-      #     INITIAL_MESSAGE="${INITIAL_MESSAGE//$'\r'/' '}"
-      #     echo "commitMessage=$INITIAL_MESSAGE" >> $GITHUB_OUTPUT
-      #     echo $INITIAL_MESSAGE
-      #     rm $temp_file
-      #
-      # - name: Stage all changelog files
-      #   if: ${{ !cancelled() }}
-      #   run: |
-      #     git add '*.md'
-      #
-      # - name: Commit changes
-      #   if: ${{ !cancelled() }}
-      #   uses: planetscale/ghcommit-action@v0.2.0
-      #   env:
-      #     GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-      #   with:
-      #     repo: ${{ github.repository }}
-      #     branch: master
-      #     commit_message: ${{ steps.commit_message.outputs.commitMessage }}
-      #     file_pattern: '*.json *.md *.yaml *.yml *.lock'
+      - name: Compose commit message
+        if: ${{ !cancelled() }}
+        id: commit_message
+        run: |
+          INITIAL_MESSAGE=$'chore(common): versions\n\n'
+          temp_file=$(mktemp)
+          yarn workspaces changed foreach -vpj 2 --exclude . exec "echo \"\$npm_package_name:\$npm_package_version \" >> $temp_file"
+          MESSAGE=$(cat $temp_file)
+          echo $(cat $temp_file)
+          INITIAL_MESSAGE+=$MESSAGE
+          INITIAL_MESSAGE="${INITIAL_MESSAGE//'%'/' '}"
+          INITIAL_MESSAGE="${INITIAL_MESSAGE//$'\n'/' '}"
+          INITIAL_MESSAGE="${INITIAL_MESSAGE//$'\r'/' '}"
+          echo "commitMessage=$INITIAL_MESSAGE" >> $GITHUB_OUTPUT
+          echo $INITIAL_MESSAGE
+          rm $temp_file
+
+      - name: Stage all changelog files
+        if: ${{ !cancelled() }}
+        run: |
+          git add '*.md'
+
+      - name: Commit changes
+        if: ${{ !cancelled() }}
+        uses: planetscale/ghcommit-action@v0.2.0
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        with:
+          repo: ${{ github.repository }}
+          branch: master
+          commit_message: ${{ steps.commit_message.outputs.commitMessage }}
+          file_pattern: '*.json *.md *.yaml *.yml *.lock'
