@@ -4,7 +4,7 @@
   "license": "BSD 3-Clause",
   "type": "module",
   "workspaces": [
-    "scripts/**"
+    "scripts/**/*"
   ],
   "devDependencies": {
     "@atls/code-runtime": "2.1.9",

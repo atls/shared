@@ -12,6 +12,11 @@ on:
         required: true
         type: string
         description: App ID for committing changes
+      registryServer:
+        required: false
+        type: string
+        default: 'https://registry.npmjs.org'
+        description: Where to send the package
     secrets:
       appPrivateKey:
         required: true
