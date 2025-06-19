@@ -79,7 +79,7 @@ jobs:
       - name: Yarn install
         run: yarn install --inline-builds
 
-      - name: Check is package changed
+      - name: Check changed package
         if: ${{ inputs.packageToPack }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
