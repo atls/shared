@@ -29,6 +29,10 @@ on:
         default: true
         type: boolean
         description: 'Login via echo -e. Default: true'
+      packageToPack:
+        required: false
+        type: string
+        description: 'What package need to pack'
     secrets:
       registryKey:
         required: true
@@ -53,7 +57,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: ${{ github.event.pull_request.base.ref || 'master' }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -75,11 +79,25 @@ jobs:
       - name: Yarn install
         run: yarn install --inline-builds
 
+      - name: Check is package changed
+        if: ${{ inputs.packageToPack }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          yarn workspaces changed list
+          CHANGED=$(yarn workspaces changed list --json | jq -r '.name')
+
+          if ! echo "$CHANGED" | grep -q "${{ inputs.packageToPack }}"; then
+            echo "New release not changed, cancel workflow"
+            gh run cancel ${{ github.run_id }}
+          fi
+
       - name: Install Buildpack CLI
         run: |
           (curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.36.2/pack-v0.36.2-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack)
 
       - name: Pack and publish
+        if: ${{ !inputs.packageToPack }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REGISTRY_URL: ${{ inputs.registryURL }}
@@ -89,3 +107,15 @@ jobs:
           PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
 
           yarn workspaces changed foreach -vpj 2 image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+
+      - name: Pack and publish
+        if: ${{ inputs.packageToPack }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_URL: ${{ inputs.registryURL }}
+          PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
+          IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
+        run: |
+          PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
+
+          yarn workspace ${{ inputs.packageToPack }} image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
