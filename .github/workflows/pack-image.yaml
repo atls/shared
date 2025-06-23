@@ -32,7 +32,11 @@ on:
       include:
         required: false
         type: string
-        description: 'What package need to pack'
+        description: 'A comma-separated list of workspace names or glob patterns to include in the build. If provided, only these packages will be processed.'
+      exclude:
+        required: false
+        type: string
+        description: 'A comma-separated list of workspace names or glob patterns to exclude from the build. If provided, these packages will be skipped.'
     secrets:
       registryKey:
         required: true
@@ -82,7 +86,7 @@ jobs:
           (curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.36.2/pack-v0.36.2-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack)
 
       - name: Pack and publish
-        if: ${{ !inputs.include }}
+        if: ${{ !inputs.include && !inputs.exclude }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REGISTRY_URL: ${{ inputs.registryURL }}
@@ -93,7 +97,7 @@ jobs:
 
           yarn workspaces changed foreach -vpj 2 image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
 
-      - name: Pack and publish
+      - name: Pack and publish included packages
         if: ${{ inputs.include }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -103,4 +107,28 @@ jobs:
         run: |
           PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
 
-          yarn workspaces foreach --all --include ${{ inputs.include }} image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+          IFS=',' read -r -a include_array <<< "${{ inputs.include }}"
+          INCLUDE_FLAGS=""
+          for ws in "${include_array[@]}"; do
+            INCLUDE_FLAGS+="--include \"$ws\" "
+          done
+
+          yarn workspaces foreach --all $INCLUDE_FLAGS image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+
+      - name: Pack and publish without excluded
+        if: ${{ !inputs.include && inputs.exclude }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_URL: ${{ inputs.registryURL }}
+          PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
+          IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
+        run: |
+          PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
+
+          IFS=',' read -r -a include_array <<< "${{ inputs.exclude }}"
+          EXCLUDE_FLAGS=""
+          for ws in "${include_array[@]}"; do
+            EXCLUDE_FLAGS+="--exclude \"$ws\" "
+          done
+
+          yarn workspaces foreach --all $EXCLUDE_FLAGS image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
