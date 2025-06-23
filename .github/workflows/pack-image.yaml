@@ -78,19 +78,6 @@ jobs:
       - name: Yarn install
         run: yarn install --inline-builds
 
-      - name: Check changed package
-        if: ${{ inputs.packageToPack }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          yarn workspaces changed list
-          CHANGED=$(yarn workspaces changed list --json | jq -r '.name')
-
-          if ! echo "$CHANGED" | grep -q "${{ inputs.packageToPack }}"; then
-            echo "New release not changed, cancel workflow"
-            gh run cancel ${{ github.run_id }}
-          fi
-
       - name: Install Buildpack CLI
         run: |
           (curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.36.2/pack-v0.36.2-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack)
