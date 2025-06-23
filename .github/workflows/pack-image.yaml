@@ -49,6 +49,12 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
+      - name: Validate inputs - include and exclude
+        if: ${{ inputs.include && inputs.exclude }}
+        run: |
+          echo "Error: You cannot specify both 'include' and 'exclude' at the same time."
+          exit 1
+
       - name: Login to registry
         env:
           REGISTRY_KEY: ${{ secrets.registryKey }}
