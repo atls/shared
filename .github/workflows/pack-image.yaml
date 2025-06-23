@@ -103,4 +103,4 @@ jobs:
         run: |
           PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
 
-          yarn workspaces foreach --all --include ${{ inputs.include }} run image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+          yarn workspaces foreach --all --include ${{ inputs.include }} image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
