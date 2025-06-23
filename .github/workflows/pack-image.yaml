@@ -29,10 +29,11 @@ on:
         default: true
         type: boolean
         description: 'Login via echo -e. Default: true'
-      packageToPack:
+      include:
         required: false
         type: string
-        description: 'What package need to pack'
+        default: '*'
+        description: 'What workspace nees to include to pack'
     secrets:
       registryKey:
         required: true
@@ -56,8 +57,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.base.ref || 'master' }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -106,16 +105,4 @@ jobs:
         run: |
           PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
 
-          yarn workspaces changed foreach -vpj 2 image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
-
-      - name: Pack and publish
-        if: ${{ inputs.packageToPack }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REGISTRY_URL: ${{ inputs.registryURL }}
-          PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
-          IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
-        run: |
-          PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
-
-          yarn workspace ${{ inputs.packageToPack }} image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+          yarn workspaces --include ${{ inputs.include }} changed foreach -vpj 2 image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
