@@ -103,3 +103,67 @@ jobs:
             const logins = members.map(m => m.login);
             core.info(`Team ${team.slug} members: ${logins.join(', ')}`);
             core.setOutput('members', JSON.stringify(logins));
+
+      - name: Check DSM comments on issues
+        id: check_dsm_comments
+        uses: actions/github-script@v7
+        env:
+          ISSUES: ${{ steps.closed_tasks.outputs.issues }}
+          DSM_MEMBERS: ${{ steps.team_dsm.outputs.members }}
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const issues = JSON.parse(process.env.ISSUES || '[]');
+            const dsm = new Set(JSON.parse(process.env.DSM_MEMBERS || '[]').map(s => s.toLowerCase()));
+
+            /** Collect missing comments: { member -> [{issue_number, title, url, closed_at}] } */
+            const missingByMember = new Map([...dsm].map(m => [m, []]));
+
+            for (const issue of issues) {
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: issue.number, per_page: 100,
+              });
+
+              const commenters = new Set(
+                comments
+                  .map(c => c.user?.login?.toLowerCase())
+                  .filter(Boolean)
+              );
+
+              for (const member of dsm) {
+                if (!commenters.has(member)) {
+                  missingByMember.get(member).push({
+                    issue_number: issue.number,
+                    title: issue.title,
+                    url: issue.url,
+                    closed_at: issue.closed_at
+                  });
+                }
+              }
+            }
+
+            // Build summary table: Member | Missing Count | Details
+            const table = [
+              [
+                { data: 'Member', header: true },
+                { data: 'Missing count', header: true },
+                { data: 'Details', header: true }
+              ]
+            ];
+
+            for (const [member, list] of missingByMember.entries()) {
+              const details = list.length
+                ? list.map(i => `#${i.issue_number} <a href="${i.url}">${i.title}</a> — closed ${new Date(i.closed_at).toISOString()}`).join('<br/>')
+                : '—';
+              table.push([member, String(list.length), details]);
+            }
+
+            await core.summary
+              .addHeading('DSM members without comments on closed issues (last 14 days)')
+              .addTable(table)
+              .write();
+
+            core.setOutput('missing', JSON.stringify(Object.fromEntries(missingByMember)));
