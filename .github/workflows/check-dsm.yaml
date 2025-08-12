@@ -146,7 +146,7 @@ jobs:
                 hasStatus: Boolean(match),
                 matchedAt: match?.created_at || null,
                 sources: r.sources,
-                commentUrl: match?.url || null,
+                commentUrl: match?.html_url || null,
                 error
               });
             }
@@ -168,7 +168,7 @@ jobs:
                 `<a href="${r.url}">${r.ref}</a>`,
                 r.hasStatus ? 'YES' : 'NO',
                 r.matchedAt ? `<a href="${r.commentUrl}">${new Date(r.matchedAt).toISOString().slice(0, 10)}</a>` : '—',
-                r.sources.join(', '),
+                r.sources.map(source => `<a href="https://github.com/${owner}/${repo}/issues/${source.replace('#', '')}">${source}</a>`).join(', '),
                 r.error || '—'
               ]);
             }
