@@ -6,6 +6,10 @@ on:
       period:
         type: string
         required: true
+      retries:
+        type: number
+        required: false
+        default: 5
       app-id:
         type: string
         required: true
@@ -31,6 +35,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.app-token.outputs.token }}
+          retries: ${{ inputs.retries }}
           script: |
             const sinceDate = new Date(Date.now() - ${{ inputs.period }} * 24 * 60 * 60 * 1000);
             const since = sinceDate.toISOString().slice(0, 10);
@@ -55,6 +60,7 @@ jobs:
           ISSUES: ${{ steps.issues.outputs.issues }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
+          retries: ${{ inputs.retries }}
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -111,6 +117,7 @@ jobs:
           REFS: ${{ steps.collect_refs.outputs.refs }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
+          retries: ${{ inputs.retries }}
           script: |
             const owner = context.repo.owner.toLowerCase();
             const repo = context.repo.repo.toLowerCase();
