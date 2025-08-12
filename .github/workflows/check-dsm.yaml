@@ -3,6 +3,9 @@ name: Check issues
 on:
   workflow_call:
     inputs:
+      period:
+        type: string
+        required: true
       app-id:
         type: string
         required: true
@@ -23,13 +26,13 @@ jobs:
           private-key: ${{ secrets.app-private-key }}
           owner: ${{ github.repository_owner }}
 
-      - name: Fetch issues for last 14 days
-        id: issues_14d
+      - name: Fetch issues
+        id: issues
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const sinceDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+            const sinceDate = new Date(Date.now() - ${{ inputs.period }} * 24 * 60 * 60 * 1000);
             const since = sinceDate.toISOString().slice(0, 10);
             const q = [
               `repo:${context.repo.owner}/${context.repo.repo}`,
@@ -49,7 +52,7 @@ jobs:
         id: collect_refs
         uses: actions/github-script@v7
         env:
-          ISSUES: ${{ steps.issues_14d.outputs.issues }}
+          ISSUES: ${{ steps.issues.outputs.issues }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
@@ -164,7 +167,7 @@ jobs:
             }
 
             await core.summary
-              .addHeading(`Последний комментарий "Текущий статус" в ссылочных тасках (${results.length})`)
+              .addHeading(`Check-in in referenced tasks (${results.length})`)
               .addTable(table)
               .write();
 
