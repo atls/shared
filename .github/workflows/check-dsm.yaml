@@ -136,6 +136,8 @@ jobs:
             for (const r of refs) {
               let match = null;
               let error = null;
+              let count = null;
+
               try {
                 const comments = await github.paginate(github.rest.issues.listComments, {
                   owner: r.owner, repo: r.repo, issue_number: r.number, per_page: 100,
@@ -143,6 +145,7 @@ jobs:
 
                 comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                 match = comments.find(c => re.test(c.body || '')) || null;
+                count = (comments.filter(c => re.test(c.body || '')) || []).length();
               } catch (e) {
                 error = (e && e.status) ? `HTTP ${e.status}` : 'unknown';
               }
@@ -154,6 +157,7 @@ jobs:
                 matchedAt: match?.created_at || null,
                 sources: r.sources,
                 commentUrl: match?.html_url || null,
+                checkInCount: count,
                 author: r.author || null,
                 error
               });
@@ -176,11 +180,12 @@ jobs:
             const table = [
               [{data:'Author',header:true},{data:'Ref',header:true},{data:'Comment date',header:true},{data:'DSM ref',header:true},{data:'Error',header:true}]
             ];
+
             for (const r of results) {
               table.push([
                 r.author ? `<a href="https://github.com/${r.author}">${r.author}</a>` : '—',
                 `<a href="${r.url}">${r.ref}</a>`,
-                r.matchedAt ? `<a href="${r.commentUrl}">${new Date(r.matchedAt).toISOString().slice(0, 10)}</a>` : '—',
+                r.matchedAt ? `<a href="${r.commentUrl}">${new Date(r.matchedAt).toISOString().slice(0, 10)} (${r.checkInCount})</a>` : '—',
                 r.sources.map(source => `<a href="https://github.com/${owner}/${repo}/issues/${source.replace('#', '')}">${source}</a>`).join(' '),
                 r.error || '—'
               ]);
