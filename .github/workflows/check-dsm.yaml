@@ -126,7 +126,8 @@ jobs:
           retries: ${{ inputs.retries }}
           script: |
             const refs = (JSON.parse(process.env.REFS || '[]') || []);
-            const filteredRefs = refs.filter((ref) => ref.author?.toLowerCase() !== 'torinasakura');
+            const filteredByUserRefs = refs.filter((ref) => ref.author?.toLowerCase() !== 'torinasakura');
+            const filteredRefs = filteredByUserRefs.filter((ref) => !ref.url?.toLowerCase().includes('dsm'));
 
             core.setOutput('refs', JSON.stringify(filteredRefs));
 
@@ -199,7 +200,7 @@ jobs:
               table.push([
                 r.author ? `<a href="https://github.com/${r.author}">${r.author}</a>` : '—',
                 `<a href="${r.url}">${r.ref}</a>`,
-                r.matchedAt ? `<a href="${r.commentUrl}">${new Date(r.matchedAt).toISOString().slice(0, 10)}${r.checkInCount ? '(${r.checkInCount})' : ''}</a>` : '—',
+                r.matchedAt ? `<a href="${r.commentUrl}">${new Date(r.matchedAt).toISOString().slice(0, 10)}${r.checkInCount ? `(${r.checkInCount})` : ''}</a>` : '—',
                 r.sources.map(source => `<a href="https://github.com/${owner}/${repo}/issues/${source.replace('#', '')}">${source}</a>`).join(' '),
                 r.error || '—'
               ]);
