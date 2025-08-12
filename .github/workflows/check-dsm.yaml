@@ -159,7 +159,7 @@ jobs:
               });
             }
 
-            # Sort by author, status and date
+            // Sort by author, status and date
             const keyAuthor = s => (s || '\uFFFF').toLowerCase();
             results.sort((a, b) => {
               const aa = keyAuthor(a.author);
