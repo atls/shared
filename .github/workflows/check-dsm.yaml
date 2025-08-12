@@ -55,21 +55,6 @@ jobs:
               author: i.user?.login ?? null,
             }));
 
-            const rows = [
-              [{data: '№', header: true}, {data: 'Title', header: true}, {data: 'Closed At', header: true}]
-            ].concat(
-              issues.map(i => [
-                `#${i.number}`,
-                `<a href="${i.url}">${i.title}</a>`,
-                new Date(i.closed_at).toISOString()
-              ])
-            );
-
-            await core.summary
-              .addHeading(`Closed issues for last 14 days (${issues.length})`)
-              .addTable(rows)
-              .write();
-
             core.setOutput('issues', JSON.stringify(issues, null, 2));
 
       - name: Fetch members of team dsm
@@ -156,7 +141,7 @@ jobs:
 
             for (const [member, list] of missingByMember.entries()) {
               const details = list.length
-                ? list.map(i => `#${i.issue_number} <a href="${i.url}">${i.title}</a> — closed ${new Date(i.closed_at).toISOString()}`).join('<br/>')
+                ? list.map(i => `#${i.issue_number} <a href="${i.url}">${i.title}</a>`).join('<br/>')
                 : '—';
               table.push([member, String(list.length), details]);
             }
