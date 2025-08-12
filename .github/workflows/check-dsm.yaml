@@ -159,23 +159,27 @@ jobs:
               });
             }
 
+            # Sort by author, status and date
+            const keyAuthor = s => (s || '\uFFFF').toLowerCase();
             results.sort((a, b) => {
-              if (a.hasStatus === b.hasStatus) {
-                const ta = a.matchedAt ? new Date(a.matchedAt).getTime() : 0;
-                const tb = b.matchedAt ? new Date(b.matchedAt).getTime() : 0;
-                return tb - ta;
-              }
-              return a.hasStatus ? 1 : -1;
+              const aa = keyAuthor(a.author);
+              const bb = keyAuthor(b.author);
+              if (aa !== bb) return aa < bb ? -1 : 1;
+
+              if (a.hasStatus !== b.hasStatus) return a.hasStatus ? 1 : -1;
+
+              const ta = a.matchedAt ? new Date(a.matchedAt).getTime() : 0;
+              const tb = b.matchedAt ? new Date(b.matchedAt).getTime() : 0;
+              return tb - ta;
             });
 
             const table = [
-              [{data:'Ref',header:true},{data:'Has check-in',header:true},{data:'Author',header:true},{data:'Comment date',header:true},{data:'DSM ref',header:true},{data:'Error',header:true}]
+              [{data:'Author',header:true},{data:'Ref',header:true},{data:'Comment date',header:true},{data:'DSM ref',header:true},{data:'Error',header:true}]
             ];
             for (const r of results) {
               table.push([
+                r.author ? `<a href="https://github.com/${r.author}">${r.author}</a>` : '—',
                 `<a href="${r.url}">${r.ref}</a>`,
-                r.hasStatus ? 'YES' : 'NO',
-                r.author ? `<a href="https://github.com/nelfimov">${r.author}</a>` : '—',
                 r.matchedAt ? `<a href="${r.commentUrl}">${new Date(r.matchedAt).toISOString().slice(0, 10)}</a>` : '—',
                 r.sources.map(source => `<a href="https://github.com/${owner}/${repo}/issues/${source.replace('#', '')}">${source}</a>`).join(' '),
                 r.error || '—'
