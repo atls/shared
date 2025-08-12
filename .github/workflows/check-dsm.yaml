@@ -120,11 +120,15 @@ jobs:
               let match = null;
               let error = null;
               try {
-                console.log(`Search for comments in issue. OWNER: ${r.owner}, REPO: ${r.repo}, ISSUE_NUMBER: ${r.number}`);
                 const comments = await github.paginate(github.rest.issues.listComments, {
-                  owner: r.owner, repo: r.repo, issue_number: r.number, per_page: 100, direction: 'desc', sort: 'updated',
+                  owner: r.owner, repo: r.repo, issue_number: r.number, per_page: 100,
                 });
-                console.log(`Found ${comments.length} comments in issue ${r.number} of ${r.repo}`);
+
+                comments.forEach(comment => {
+                  comment.createdAtTs = Date.parse(comment.created_at);
+                });
+                comments.sort((a, b) => b.createdAtTs - a.createdAtTs);
+
                 match = comments.find(c => re.test(c.body || '')) || null;
               } catch (e) {
                 error = (e && e.status) ? `HTTP ${e.status}` : 'unknown';
