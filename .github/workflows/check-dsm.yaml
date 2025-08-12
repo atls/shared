@@ -2,6 +2,13 @@ name: Check issues
 
 on:
   workflow_call:
+    inputs:
+      app-id:
+        type: string
+        required: true
+    secrets:
+      app-private-key:
+        required: true
 
 jobs:
   run:
@@ -9,10 +16,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ inputs.app-id }}
+          private-key: ${{ secrets.app-private-key }}
+          owner: ${{ github.repository_owner }}
+
       - name: Fetch closed issues for last 14 days
         id: closed_tasks
         uses: actions/github-script@v7
         with:
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const sinceDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
             const since = sinceDate.toISOString().slice(0, 10); // YYYY-MM-DD
@@ -61,6 +76,7 @@ jobs:
         id: team_dsm
         uses: actions/github-script@v7
         with:
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const org = context.repo.owner;
             const target = 'dsm';
