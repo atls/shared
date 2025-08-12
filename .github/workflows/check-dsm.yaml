@@ -74,19 +74,19 @@ jobs:
                 for (const m of body.matchAll(urlRe)) {
                   const key = `${m[1]}/${m[2]}#${m[3]}`;
                   if (!refs.has(key)) refs.set(key, { owner: m[1], repo: m[2], number: Number(m[3]), sources: new Set() });
-                  refs.get(key).sources.add(`#${issue.number}`);
+                  refs.get(key).sources.add(`${owner}/${repo}/#${issue.number}`);
                 }
 
                 for (const m of body.matchAll(crossRefRe)) {
                   const key = `${m[2]}/${m[3]}#${m[4]}`;
                   if (!refs.has(key)) refs.set(key, { owner: m[2], repo: m[3], number: Number(m[4]), sources: new Set() });
-                  refs.get(key).sources.add(`#${issue.number}`);
+                  refs.get(key).sources.add(`${owner}/${repo}/#${issue.number}`);
                 }
 
                 for (const m of body.matchAll(localHashRe)) {
                   const key = `${owner}/${repo}#${m[2]}`;
                   if (!refs.has(key)) refs.set(key, { owner, repo, number: Number(m[2]), sources: new Set() });
-                  refs.get(key).sources.add(`#${issue.number}`);
+                  refs.get(key).sources.add(`${owner}/${repo}/#${issue.number}`);
                 }
               }
             }
@@ -97,15 +97,13 @@ jobs:
               number: r.number,
               url: `https://github.com/${r.owner}/${r.repo}/issues/${r.number}`,
               sources: [...r.sources],
-              in_scope: r.owner.toLowerCase() === owner.toLowerCase() && r.repo.toLowerCase() === repo.toLowerCase()
             }));
 
             await core.summary
               .addHeading(`Собраны ссылки на таски из комментов (${referenced.length})`)
-              .addTable([[{data:'Ref',header:true},{data:'Scope',header:true},{data:'From',header:true}]].concat(
+              .addTable([[{data:'Ref',header:true},{data:'From',header:true}]].concat(
                 referenced.map(r => [
                   `<a href="${r.url}">${r.owner}/${r.repo}#${r.number}</a>`,
-                  r.in_scope ? 'local' : 'external',
                   r.sources.join(', ')
                 ])
               ))
