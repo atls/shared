@@ -83,22 +83,23 @@ jobs:
 
               for (const c of comments) {
                 const body = c.body || '';
+                const author = c.user.login || '';
 
                 for (const m of body.matchAll(urlRe)) {
                   const key = `${m[1]}/${m[2]}#${m[3]}`;
-                  if (!refs.has(key)) refs.set(key, { owner: m[1], repo: m[2], number: Number(m[3]), sources: new Set() });
+                  if (!refs.has(key)) refs.set(key, { owner: m[1], repo: m[2], number: Number(m[3]), sources: new Set(), author, });
                   refs.get(key).sources.add(`#${issue.number}`);
                 }
 
                 for (const m of body.matchAll(crossRefRe)) {
                   const key = `${m[2]}/${m[3]}#${m[4]}`;
-                  if (!refs.has(key)) refs.set(key, { owner: m[2], repo: m[3], number: Number(m[4]), sources: new Set() });
+                  if (!refs.has(key)) refs.set(key, { owner: m[2], repo: m[3], number: Number(m[4]), sources: new Set(), author, });
                   refs.get(key).sources.add(`#${issue.number}`);
                 }
 
                 for (const m of body.matchAll(localHashRe)) {
                   const key = `${owner}/${repo}#${m[2]}`;
-                  if (!refs.has(key)) refs.set(key, { owner, repo, number: Number(m[2]), sources: new Set() });
+                  if (!refs.has(key)) refs.set(key, { owner, repo, number: Number(m[2]), sources: new Set(), author, });
                   refs.get(key).sources.add(`#${issue.number}`);
                 }
               }
@@ -110,11 +111,12 @@ jobs:
               number: r.number,
               url: `https://github.com/${r.owner}/${r.repo}/issues/${r.number}`,
               sources: [...r.sources],
+              author: r.author
             }));
 
             core.setOutput('refs', JSON.stringify(referenced));
 
-      - name: Find latest "текущий статус" comment in referenced issues
+      - name: Find latest check-in comment in referenced issues
         id: check_status
         uses: actions/github-script@v7
         env:
@@ -130,6 +132,7 @@ jobs:
             const re = /(текущий статус)|(что сделано)/i;
 
             const results = [];
+
             for (const r of refs) {
               let match = null;
               let error = null;
@@ -151,6 +154,7 @@ jobs:
                 matchedAt: match?.created_at || null,
                 sources: r.sources,
                 commentUrl: match?.html_url || null,
+                author: r.author || null,
                 error
               });
             }
@@ -171,6 +175,7 @@ jobs:
               table.push([
                 `<a href="${r.url}">${r.ref}</a>`,
                 r.hasStatus ? 'YES' : 'NO',
+                r.author ? `<a href="https://github.com/nelfimov">${r.author}</a>` : '—',
                 r.matchedAt ? `<a href="${r.commentUrl}">${new Date(r.matchedAt).toISOString().slice(0, 10)}</a>` : '—',
                 r.sources.map(source => `<a href="https://github.com/${owner}/${repo}/issues/${source.replace('#', '')}">${source}</a>`).join(' '),
                 r.error || '—'
