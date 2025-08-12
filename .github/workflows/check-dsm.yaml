@@ -125,7 +125,7 @@ jobs:
             const repo = context.repo.repo.toLowerCase();
             const refs = (JSON.parse(process.env.REFS || '[]') || []);
 
-            const re = /текущий статус/i;
+            const re = /(текущий статус)|(что сделано)/i;
 
             const results = [];
             for (const r of refs) {
