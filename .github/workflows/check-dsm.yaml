@@ -99,16 +99,6 @@ jobs:
               sources: [...r.sources],
             }));
 
-            await core.summary
-              .addHeading(`Собраны ссылки на таски из комментов (${referenced.length})`)
-              .addTable([[{data:'Ref',header:true},{data:'From',header:true}]].concat(
-                referenced.map(r => [
-                  `<a href="${r.url}">${r.owner}/${r.repo}#${r.number}</a>`,
-                  r.sources.join(', ')
-                ])
-              ))
-              .write();
-
             core.setOutput('refs', JSON.stringify(referenced));
 
       - name: Find latest "текущий статус" comment in referenced issues
@@ -132,7 +122,7 @@ jobs:
               try {
                 console.log(`Search for comments in issue. OWNER: ${r.owner}, REPO: ${r.repo}, ISSUE_NUMBER: ${r.number}`);
                 const comments = await github.paginate(github.rest.issues.listComments, {
-                  owner: r.owner, repo: r.repo, issue_number: r.number, per_page: 100, direction: "desc"
+                  owner: r.owner, repo: r.repo, issue_number: r.number, per_page: 100, direction: "asc"
                 });
                 console.log(`Found ${comments.length} comments in issue ${r.number} of ${r.repo}`);
                 match = comments.find(c => re.test(c.body || '')) || null;
@@ -161,14 +151,14 @@ jobs:
             });
 
             const table = [
-              [{data:'Ref',header:true},{data:'Has "Текущий статус"',header:true},{data:'Comment date',header:true},{data:'From',header:true},{data:'Error',header:true}]
+              [{data:'Ref',header:true},{data:'Has check-in',header:true},{data:'Comment date',header:true},{data:'DSM ref',header:true},{data:'Error',header:true}]
             ];
             for (const r of results) {
               table.push([
                 `<a href="${r.url}">${r.ref}</a>`,
                 r.hasStatus ? 'YES' : 'NO',
                 r.matchedAt ? `<a href="${r.commentUrl}">${new Date(r.matchedAt).toISOString().slice(0, 10)}</a>` : '—',
-                r.sources.map(source => `<a href="https://github.com/${owner}/${repo}/issues/${source.replace('#', '')}">${source}</a>`).join(', '),
+                r.sources.map(source => `<a href="https://github.com/${owner}/${repo}/issues/${source.replace('#', '')}">${source}</a>`).join(' '),
                 r.error || '—'
               ]);
             }
