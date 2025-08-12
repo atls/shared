@@ -111,7 +111,7 @@ jobs:
 
             core.setOutput('refs', JSON.stringify(referenced));
 
-      - name: Find latest "текущий статус" comment in referenced issues (local only)
+      - name: Find latest "текущий статус" comment in referenced issues
         id: check_status
         uses: actions/github-script@v7
         env:
@@ -149,6 +149,15 @@ jobs:
                 error
               });
             }
+
+            results.sort((a, b) => {
+              if (a.hasStatus === b.hasStatus) {
+                const ta = a.matchedAt ? new Date(a.matchedAt).getTime() : 0;
+                const tb = b.matchedAt ? new Date(b.matchedAt).getTime() : 0;
+                return tb - ta;
+              }
+              return a.hasStatus ? 1 : -1;
+            });
 
             const table = [
               [{data:'Ref',header:true},{data:'Has "Текущий статус"',header:true},{data:'Comment date',header:true},{data:'From',header:true},{data:'Error',header:true}]
