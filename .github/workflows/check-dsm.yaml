@@ -169,7 +169,7 @@ jobs:
             });
 
             const table = [
-              [{data:'Ref',header:true},{data:'Has check-in',header:true},{data:'Comment date',header:true},{data:'DSM ref',header:true},{data:'Error',header:true}]
+              [{data:'Ref',header:true},{data:'Has check-in',header:true},{data:'Author',header:true},{data:'Comment date',header:true},{data:'DSM ref',header:true},{data:'Error',header:true}]
             ];
             for (const r of results) {
               table.push([
