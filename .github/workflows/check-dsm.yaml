@@ -145,7 +145,7 @@ jobs:
 
                 comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                 match = comments.find(c => re.test(c.body || '')) || null;
-                count = (comments.filter(c => re.test(c.body || '')) || []).length;
+                count = (comments.filter(c => re.test(c.body || '') && c.user.login === r.author) || []).length;
               } catch (e) {
                 error = (e && e.status) ? `HTTP ${e.status}` : 'unknown';
               }
