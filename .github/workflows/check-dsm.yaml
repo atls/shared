@@ -1,0 +1,58 @@
+name: Check issues
+
+on:
+  workflow_call:
+
+jobs:
+  run:
+    name: Check issue dates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch closed issues for last 14 days
+        id: closed_tasks
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sinceDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+            const since = sinceDate.toISOString().slice(0, 10); // YYYY-MM-DD
+
+            const q = [
+              `repo:${context.repo.owner}/${context.repo.repo}`,
+              'is:issue',
+              'is:closed',
+              `closed:>=${since}`
+            ].join(' ');
+
+            const items = await github.paginate(github.rest.search.issuesAndPullRequests, {
+              q,
+              per_page: 100,
+            });
+
+            // Normalize fields
+            const issues = items.map(i => ({
+              number: i.number,
+              title: i.title,
+              url: i.html_url,
+              closed_at: i.closed_at,
+              assignees: i.assignees?.map(a => a.login) ?? [],
+              labels: i.labels?.map(l => typeof l === 'string' ? l : l.name).filter(Boolean) ?? [],
+              author: i.user?.login ?? null,
+            }));
+
+            const rows = [
+              [{data: '№', header: true}, {data: 'Title', header: true}, {data: 'Closed At', header: true}]
+            ].concat(
+              issues.map(i => [
+                `#${i.number}`,
+                `<a href="${i.url}">${i.title}</a>`,
+                new Date(i.closed_at).toISOString()
+              ])
+            );
+
+            await core.summary
+              .addHeading(`Closed issues for last 14 days (${issues.length})`)
+              .addTable(rows)
+              .write();
+
+            core.setOutput('issues', JSON.stringify(issues, null, 2));
