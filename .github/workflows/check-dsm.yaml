@@ -44,14 +44,18 @@ jobs:
               'is:issue',
               `created:>=${since}`
             ].join(' ');
-            const items = await github.paginate(github.rest.search.issuesAndPullRequests, { q, per_page: 100 });
-            const issues = items.map(i => ({
-              number: i.number,
-              title: i.title,
-              url: i.html_url,
-              created_at: i.created_at,
-            }));
-            core.setOutput('issues', JSON.stringify(issues));
+            try {
+              const items = await github.paginate(github.rest.search.issuesAndPullRequests, { q, per_page: 100 });
+              const issues = items.map(i => ({
+                number: i.number,
+                title: i.title,
+                url: i.html_url,
+                created_at: i.created_at,
+              }));
+              core.setOutput('issues', JSON.stringify(issues));
+            } catch (error) {
+              console.error(error)
+            }
 
       - name: Collect referenced issues from comments
         id: collect_refs
