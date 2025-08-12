@@ -116,11 +116,25 @@ jobs:
 
             core.setOutput('refs', JSON.stringify(referenced));
 
+      - name: Filter refs
+        id: filter_refs
+        uses: actions/github-script@v7
+        env:
+          REFS: ${{ steps.collect_refs.outputs.refs }}
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          retries: ${{ inputs.retries }}
+          script: |
+            const refs = (JSON.parse(process.env.REFS || '[]') || []);
+            const filteredRefs = refs.filter((ref) => ref.author?.toLowerCase() !== 'torinasakura');
+
+            core.setOutput('refs', JSON.stringify(filteredRefs));
+
       - name: Find latest check-in comment in referenced issues
         id: check_status
         uses: actions/github-script@v7
         env:
-          REFS: ${{ steps.collect_refs.outputs.refs }}
+          REFS: ${{ steps.filter_refs.outputs.refs }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           retries: ${{ inputs.retries }}
@@ -144,7 +158,7 @@ jobs:
                 });
 
                 comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                match = comments.find(c => re.test(c.body || '')) || null;
+                match = comments.find(c => re.test(c.body || '') && c.user.login === r.author) || null;
                 count = (comments.filter(c => re.test(c.body || '') && c.user.login === r.author) || []).length;
               } catch (e) {
                 error = (e && e.status) ? `HTTP ${e.status}` : 'unknown';
@@ -178,14 +192,14 @@ jobs:
             });
 
             const table = [
-              [{data:'Author',header:true},{data:'Ref',header:true},{data:'Comment date',header:true},{data:'DSM ref',header:true},{data:'Error',header:true}]
+              [{data:'Author',header:true},{data:'Ref',header:true},{data:'Last check-in (total check-ins)',header:true},{data:'DSM ref',header:true},{data:'Error',header:true}]
             ];
 
             for (const r of results) {
               table.push([
                 r.author ? `<a href="https://github.com/${r.author}">${r.author}</a>` : '—',
                 `<a href="${r.url}">${r.ref}</a>`,
-                r.matchedAt ? `<a href="${r.commentUrl}">${new Date(r.matchedAt).toISOString().slice(0, 10)} (${r.checkInCount})</a>` : '—',
+                r.matchedAt ? `<a href="${r.commentUrl}">${new Date(r.matchedAt).toISOString().slice(0, 10)}${r.checkInCount ? '(${r.checkInCount})' : ''}</a>` : '—',
                 r.sources.map(source => `<a href="https://github.com/${owner}/${repo}/issues/${source.replace('#', '')}">${source}</a>`).join(' '),
                 r.error || '—'
               ]);
