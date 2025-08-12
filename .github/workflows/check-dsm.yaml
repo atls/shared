@@ -62,19 +62,28 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const teamSlug = 'DSM';
             const org = context.repo.owner;
+            const target = 'dsm';
+
+            const teams = await github.paginate(github.rest.teams.list, {
+              org,
+              per_page: 100,
+            });
+
+            const team =
+              teams.find(t => t.slug.toLowerCase() === target) ||
+              teams.find(t => t.name.toLowerCase() === target);
+
+            if (!team) {
+              core.setFailed(`Team not found. Available team slugs: ${teams.map(t => t.slug).join(', ')}`);
+              return;
+            }
 
             const members = await github.paginate(
               github.rest.teams.listMembersInOrg,
-              {
-                org,
-                team_slug: teamSlug,
-                per_page: 100
-              }
+              { org, team_slug: team.slug, per_page: 100 }
             );
 
             const logins = members.map(m => m.login);
-
-            core.info(`Team ${teamSlug} members: ${logins.join(', ')}`);
-            core.setOutput('members', JSON.stringify(logins, null, 2));
+            core.info(`Team ${team.slug} members: ${logins.join(', ')}`);
+            core.setOutput('members', JSON.stringify(logins));
