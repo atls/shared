@@ -8,6 +8,11 @@ on:
         default: '22'
         required: false
         type: string
+      playwright-version:
+        description: 'Playwright version to install. Default: 1.55.0'
+        default: '1.55.0'
+        required: false
+        type: string
 
 jobs:
   checks:
@@ -47,7 +52,7 @@ jobs:
         run: |
           if yarn why playwright 2>/dev/null | grep -q 'playwright'; then
             echo "Playwright is present as a dependency. Installing..."
-            yarn dlx playwright install --with-deps
+            yarn dlx playwright@${{ inputs.playwright-version }} install --with-deps
           else
             echo "Playwright is not listed as a dependency. Skipping installation."
           fi
