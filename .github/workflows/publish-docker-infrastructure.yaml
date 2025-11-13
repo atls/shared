@@ -1,0 +1,91 @@
+name: Reusable docker image publish from infrastructure
+
+on:
+  workflow_call:
+    secrets:
+      sshPrivateKey:
+        required: true
+      token:
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login Docker registry
+        env:
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.token }}
+        run: |
+          echo $TOKEN | docker login ghcr.io -u $REPOSITORY_OWNER --password-stdin
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get changed files under images/**
+        id: changed-files
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            images/**
+          separator: "\n"
+
+      - name: Check all changed files
+        run: |
+          printf '%s\n' "${{ steps.changed-files.outputs.all_changed_files }}"
+
+      - name: Collect changed image directories
+        id: dirs
+        run: |
+          files="${{ steps.changed-files.outputs.all_changed_files }}"
+
+          dirs="$(
+            printf '%s' "$files" \
+            | tr -d '[]"' | tr ',' '\n' \
+            | sed 's#images/#\nimages/#g' | sed '/^[[:space:]]*$/d' \
+            | awk -F/ 'substr($0,1,7)=="images/" && NF>=2 {print $1"/"$2}' \
+            | sort -u
+          )"
+
+          dir_space="$(printf '%s\n' $dirs | paste -sd ' ' -)"
+          echo "Changed image dir_space:"
+          printf '%s\n' $dir_space
+          echo "CHANGED_DIRS=$dir_space" >> "$GITHUB_ENV"
+
+      - name: Build and push changed images
+        if: env.CHANGED_DIRS != ''
+        env:
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          PRIVATE_KEY: ${{ secrets.sshPrivateKey }}
+        run: |
+          REPOSITORY_OWNER_CLEAN=$(echo "$REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+
+          for DIR in $CHANGED_DIRS; do
+            DOCKERFILE="$DIR/Dockerfile"
+            if [ ! -f "$DOCKERFILE" ]; then
+              echo "Skip $DIR: no Dockerfile"
+              continue
+            fi
+
+            NAME=$(basename "$DIR")
+            IMAGE_BASE="ghcr.io/${REPOSITORY_OWNER_CLEAN}/${NAME}"
+            IMAGE_LATEST="$IMAGE_BASE:latest"
+            IMAGE_HASH="$IMAGE_BASE:$(git rev-parse --short HEAD)-$(date +%s)"
+
+            echo "Building image $IMAGE_LATEST from $DIR"
+
+            docker buildx build \
+              --platform linux/amd64 \
+              --build-arg SSH_PRIVATE_KEY="$PRIVATE_KEY" \
+              --cache-from type=gha,scope="$NAME" \
+              --cache-to type=gha,mode=max,scope="$NAME" \
+              --push \
+              --progress plain \
+              -t "$IMAGE_LATEST" \
+              -t "$IMAGE_HASH" \
+              "$DIR"
+          done

@@ -1,0 +1,75 @@
+name: Reusable docker image publish
+
+on:
+  workflow_call:
+    inputs:
+      packageName:
+        required: true
+        type: string
+        description: Image name
+      branchName:
+        required: true
+        type: string
+        description: Branch name
+      contextLocation:
+        required: true
+        type: string
+        description: Location of context for building image
+      isProd:
+        required: false
+        type: boolean
+
+    secrets:
+      token:
+        description: Token for publishing image
+        required: true
+
+env:
+  REPOSITORY_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login Docker registry
+        env:
+          TOKEN: ${{ secrets.token }}
+        run: |
+          echo $TOKEN | docker login ghcr.io -u $REPOSITORY_OWNER --password-stdin
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          name: ci-builder
+
+      - uses: actions/checkout@v4
+
+      - name: Determine tags
+        id: tags
+        run: |
+          echo "commitSha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "date=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push stage image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: |
+            ghcr.io/oracul-analytics/${{ inputs.packageName }}:stage
+            ghcr.io/oracul-analytics/${{ inputs.packageName }}:stage-${{ steps.tags.outputs.commitSha }}-${{ steps.tags.outputs.date }}
+          cache-from: type=gha,scope=${{ inputs.packageName }}
+          cache-to: type=gha,scope=${{ inputs.packageName }}
+          context: ${{ inputs.contextLocation }}
+
+      - name: Build and push prod image
+        if: ${{ inputs.isProd == true }}
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: |
+            ghcr.io/oracul-analytics/${{ inputs.packageName }}:latest
+            ghcr.io/oracul-analytics/${{ inputs.packageName }}:prod-${{ steps.tags.outputs.commitSha }}-${{ steps.tags.outputs.date }}
+          cache-from: type=gha,scope=${{ inputs.packageName }}
+          cache-to: type=gha,scope=${{ inputs.packageName }}
+          context: ${{ inputs.contextLocation }}

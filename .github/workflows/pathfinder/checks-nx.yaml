@@ -1,0 +1,66 @@
+name: Reusable NX checks
+
+on:
+  workflow_call:
+
+env:
+  CLICOLOR: 1
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: |
+          sudo apt-get install -y protobuf-compiler
+
+      - run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: tree:0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Yarn cache directory
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Check if Cargo is needed
+        id: cargo
+        run: |
+          if test -f "Cargo.toml"; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: yarn install --inline-builds
+
+      - uses: actions/cache@v4
+        if: steps.cargo.outputs.needed == 'true'
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - uses: nrwl/nx-set-shas@v4
+        with:
+          main-branch-name: ${{ github.base_ref }}
+
+      - run: yarn nx affected -t lint test
