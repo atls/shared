@@ -1,0 +1,121 @@
+name: Reusable ansible run
+
+on:
+  workflow_call:
+    inputs:
+      playbookPath:
+        required: true
+        type: string
+        default: ansible/playbooks
+
+    secrets:
+      sshPrivateKey:
+        required: true
+      vpnConfig:
+        required: false
+
+jobs:
+  run:
+    name: Run ansible playbooks
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Ansible
+        uses: alex-oleshkevich/setup-ansible@v1.0.1
+        with:
+          version: "11"
+
+      - name: Check private-key is empty or not
+        env:
+          PRIVATE_KEY: ${{ secrets.sshPrivateKey }}
+        run: |
+          test -z "$PRIVATE_KEY" && echo "EMPTY" || echo "NOT EMPTY"
+
+      - name: Set up ssh
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          PRIVATE_KEY: ${{ secrets.sshPrivateKey }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add ~/.ssh/id_rsa
+
+      - name: Check if VPN_CONFIG is provided
+        id: check_vpn_config
+        env:
+          VPN_CONFIG: ${{ secrets.vpnConfig }}
+        run: |
+          if [ -z "$VPN_CONFIG" ]; then
+            echo "VPN_CONFIG secret is not provided."
+            echo "vpn_config_provided=false" >> $GITHUB_ENV
+          else
+            echo "VPN_CONFIG secret is provided."
+            echo "vpn_config_provided=true" >> $GITHUB_ENV
+          fi
+
+      - name: Connect to VPN
+        if: env.vpn_config_provided == 'true'
+        env:
+          VPN_CONFIG: ${{ secrets.vpnConfig }}
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -yq openvpn
+
+          echo "${{ secrets.vpnConfig }}" | \
+            sudo openvpn --config /dev/stdin --daemon
+
+          echo "Waiting for VPN connection..."
+
+          for i in {1..15}; do
+            if ip a | grep -q "tun0"; then
+              echo "VPN connected successfully!"
+              exit 0
+            fi
+            echo "Waiting for VPN to establish (attempt $i)..."
+            sleep 1
+          done
+
+          echo "Failed to connect to VPN."
+          exit 1
+
+      - name: Run Ansible
+        env:
+          PLAYBOOKS_PATH: ${{ inputs.playbookPath }}
+        run: |
+          MATCHED_FILES=$(find $PLAYBOOKS_PATH -name '*.y?ml')
+
+          echo "$MATCHED_FILES"
+
+          if [ -z "$MATCHED_FILES" ]; then
+            echo "No matching files found."
+
+            exit 1
+          fi
+
+          for FILE in $MATCHED_FILES; do
+            echo "Running ansible-playbook for $FILE"
+
+            if [[ $(basename "$FILE") =~ manual.*\.ya?ml$ ]]; then
+              echo "Skipping manual playbook: $FILE"
+              continue
+            fi
+
+            cd $(dirname "$FILE")
+
+            ansible-playbook --diff --private-key="~/.ssh/id_rsa" "$(basename $FILE)"
+
+            cd "$(git rev-parse --show-toplevel)"
+          done
+
+      - name: Disconnect VPN
+        if: env.vpn_config_provided == 'true'
+        run: |
+          if [ -f /tmp/openconnect.pid ]; then
+            echo "Killing VPN session..."
+            sudo kill $(cat /tmp/openconnect.pid) || true
+          fi
