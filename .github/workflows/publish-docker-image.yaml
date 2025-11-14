@@ -56,8 +56,8 @@ jobs:
         with:
           push: true
           tags: |
-            ghcr.io/oracul-analytics/${{ inputs.packageName }}:stage
-            ghcr.io/oracul-analytics/${{ inputs.packageName }}:stage-${{ steps.tags.outputs.commitSha }}-${{ steps.tags.outputs.date }}
+            ghcr.io/atls/${{ inputs.packageName }}:stage
+            ghcr.io/atls/${{ inputs.packageName }}:stage-${{ steps.tags.outputs.commitSha }}-${{ steps.tags.outputs.date }}
           cache-from: type=gha,scope=${{ inputs.packageName }}
           cache-to: type=gha,scope=${{ inputs.packageName }}
           context: ${{ inputs.contextLocation }}
@@ -68,8 +68,8 @@ jobs:
         with:
           push: true
           tags: |
-            ghcr.io/oracul-analytics/${{ inputs.packageName }}:latest
-            ghcr.io/oracul-analytics/${{ inputs.packageName }}:prod-${{ steps.tags.outputs.commitSha }}-${{ steps.tags.outputs.date }}
+            ghcr.io/atls/${{ inputs.packageName }}:latest
+            ghcr.io/atls/${{ inputs.packageName }}:prod-${{ steps.tags.outputs.commitSha }}-${{ steps.tags.outputs.date }}
           cache-from: type=gha,scope=${{ inputs.packageName }}
           cache-to: type=gha,scope=${{ inputs.packageName }}
           context: ${{ inputs.contextLocation }}
