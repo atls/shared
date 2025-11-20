@@ -11,6 +11,8 @@ jobs:
         check: [test, clippy, fmt]
 
     steps:
+      - run: sudo apt-get update
+
       - run: sudo apt-get install -y protobuf-compiler
 
       - uses: actions/checkout@v5
@@ -18,13 +20,12 @@ jobs:
           fetch-depth: 0
           filter: tree:0
 
-      - name: Add Rust components if needed
-        run: |
-          if [ "${{ matrix.check }}" = "clippy" ]; then
-            rustup component add clippy
-          elif [ "${{ matrix.check }}" = "fmt" ]; then
-            rustup component add rustfmt
-          fi
+      - name: Set up Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly
+          components: clippy, rustfmt
+          override: true
 
       - name: Cache Rust
         uses: actions/cache@v4
@@ -35,7 +36,7 @@ jobs:
             ~/.cargo/git
             **/target
           key: >
-            rust-${{ runner.os }}-
+            rust-${{ runner.os }}-nightly-
             ${{
               hashFiles(
                 'Cargo.lock',
@@ -51,8 +52,7 @@ jobs:
           if [ "${{ matrix.check }}" = "test" ]; then
             cargo test --all --all-features --locked --jobs $(nproc)
           elif [ "${{ matrix.check }}" = "clippy" ]; then
-            cargo clippy --all-targets --all-features -- -D warnings
+            cargo clippy --locked --all-targets --all-features -- -D warnings
           elif [ "${{ matrix.check }}" = "fmt" ]; then
-            cargo fmt --all -- --check
+            cargo fmt --locked --all -- --check
           fi
-
