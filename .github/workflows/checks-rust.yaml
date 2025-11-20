@@ -1,0 +1,50 @@
+name: Reusable rust checks
+
+on:
+  workflow_call:
+
+jobs:
+  rust-checks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        check: [test, clippy, fmt]
+
+    steps:
+      - run: sudo apt-get install -y protobuf-compiler
+
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Add Rust components if needed
+        run: |
+          if [ "${{ matrix.check }}" = "clippy" ]; then
+            rustup component add clippy
+          elif [ "${{ matrix.check }}" = "fmt" ]; then
+            rustup component add rustfmt
+          fi
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run check
+        run: |
+          if [ "${{ matrix.check }}" = "test" ]; then
+            cargo test --all --all-features --locked --jobs $(nproc)
+          elif [ "${{ matrix.check }}" = "clippy" ]; then
+            cargo clippy --all-targets --all-features -- -D warnings
+          elif [ "${{ matrix.check }}" = "fmt" ]; then
+            cargo fmt --all -- --check
+          fi
+
