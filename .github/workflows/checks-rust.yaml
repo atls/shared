@@ -26,17 +26,25 @@ jobs:
             rustup component add rustfmt
           fi
 
-      - uses: actions/cache@v4
+      - name: Cache Rust
+        uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ~/.cargo/bin
+            ~/.cargo/registry
+            ~/.cargo/git
+            **/target
+          key: >
+            rust-${{ runner.os }}-
+            ${{
+              hashFiles(
+                'Cargo.lock',
+                '**/Cargo.lock',
+                '**/build.rs'
+              )
+            }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
+            rust-${{ runner.os }}-
 
       - name: Run check
         run: |
