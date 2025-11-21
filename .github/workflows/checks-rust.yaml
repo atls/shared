@@ -54,5 +54,6 @@ jobs:
           elif [ "${{ matrix.check }}" = "clippy" ]; then
             cargo clippy --locked --all-targets --all-features -- -D warnings
           elif [ "${{ matrix.check }}" = "fmt" ]; then
-            cargo fmt --locked --all -- --check
+            cargo metadata --locked --format-version 1 --no-deps > /tmp/cargo-metadata.json
+            cargo fmt --all -- --check
           fi
