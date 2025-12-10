@@ -279,7 +279,8 @@ jobs:
             "thr",
             "Ths",
             "transitionable",
-            "HAX"
+            "HAX",
+            "Wya"
           ]
           extend-ignore-re = [
             "password:.*", 
