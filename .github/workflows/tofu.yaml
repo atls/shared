@@ -1,0 +1,69 @@
+name: OpenTofu stack
+
+on:
+  workflow_call:
+    inputs:
+      stack_name:
+        required: true
+        type: string
+      stack_path:
+        required: true
+        type: string
+    secrets:
+      YC_S3_ACCESS_KEY:
+        required: true
+      YC_S3_SECRET_KEY:
+        required: true
+      variables:
+        required: false
+
+jobs:
+  tofu:
+    name: ${{ inputs.stack_name }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+      checks: write
+
+    env:
+      AWS_ACCESS_KEY_ID:     ${{ secrets.YC_S3_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_S3_SECRET_KEY }}
+      GITHUB_TOKEN:          ${{ github.token }}
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.stack_path }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes for this stack
+        id: changed-files
+        uses: tj-actions/changed-files@v46.0.5
+        with:
+          files: |
+            ${{ inputs.stack_path }}/**
+
+      - name: Tofu plan
+        if: ${{ github.event_name != 'push' && steps.changed-files.outputs.any_changed == 'true' }}
+        uses: dflook/tofu-plan@v2
+        with:
+          path: ${{ inputs.stack_path }}
+          label: ${{ inputs.stack_name }}
+          variables: |
+            ${{ secrets.variables }}
+
+      - name: Tofu apply
+        if: ${{ github.event_name == 'push' && steps.changed-files.outputs.any_changed == 'true' }}
+        uses: dflook/tofu-apply@v2
+        with:
+          path: ${{ inputs.stack_path }}
+          label: ${{ inputs.stack_name }}
+          variables: |
+            ${{ secrets.variables }}
+          auto_approve: true
