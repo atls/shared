@@ -34,10 +34,6 @@ jobs:
             images/**
           separator: "\n"
 
-      - name: Check all changed files
-        run: |
-          printf '%s\n' "${{ steps.changed-files.outputs.all_changed_files }}"
-
       - name: Collect changed image directories
         id: dirs
         run: |
