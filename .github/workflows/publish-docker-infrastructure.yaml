@@ -26,35 +26,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Get changed files under images/**
-        id: changed-files
-        uses: tj-actions/changed-files@v45
+      - name: Detect changed images
+        id: filter
+        uses: dorny/paths-filter@v3
         with:
-          files: |
-            images/**
-          separator: "\n"
+          list-files: shell
+          filters: |
+            images:
+              - added|modified: 'images/**'
 
-      - name: Collect changed image directories
-        id: dirs
+      - name: Collect changed image dirs
+        id: collect_dirs
+        if: steps.filter.outputs.images == 'true'
         run: |
-          files="${{ steps.changed-files.outputs.all_changed_files }}"
+          if [ -z "${{ steps.filter.outputs.images_files }}" ]; then
+            echo "dirs=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
-          dirs="$(
-            printf '%s' "$files" \
-            | tr -d '[]"' | tr ',' '\n' \
-            | sed 's#images/#\nimages/#g' | sed '/^[[:space:]]*$/d' \
-            | awk -F/ 'substr($0,1,7)=="images/" && NF>=2 {print $1"/"$2}' \
-            | sort -u
-          )"
+          CHANGED_DIRS=$(
+            for f in ${{ steps.filter.outputs.images_files }}; do
+              d=$(dirname "$f")
+              case "$d" in
+                images/*)
+                  echo "$d" | cut -d'/' -f1-2
+                  ;;
+              esac
+            done | sort -u
+          )
 
-          dir_space="$(printf '%s\n' $dirs | paste -sd ' ' -)"
-          echo "Changed image dir_space:"
-          printf '%s\n' $dir_space
-          echo "CHANGED_DIRS=$dir_space" >> "$GITHUB_ENV"
+          echo "Changed dirs:"
+          echo "$CHANGED_DIRS"
 
-      - name: Build and push changed images
-        if: env.CHANGED_DIRS != ''
+          echo "dirs=$CHANGED_DIRS" >> "$GITHUB_OUTPUT"
+
+      - name: Build changed images
+        if: steps.collect_dirs.outputs.dirs != ''
         env:
+          CHANGED_DIRS: ${{ steps.collect_dirs.outputs.dirs }}
           REPOSITORY_OWNER: ${{ github.repository_owner }}
           PRIVATE_KEY: ${{ secrets.sshPrivateKey }}
         run: |
