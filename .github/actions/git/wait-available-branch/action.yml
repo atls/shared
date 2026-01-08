@@ -1,0 +1,31 @@
+name: Wait available remote branch
+description: Wait available branch on remote repo
+
+inputs:
+  branchToCheck:
+    description: What branch needed to check on remote
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+    - name: Wait for branch to be available
+      shell: bash
+      run: |
+        BRANCH_TO_CHECK="${{ inputs.branchToCheck }}"
+
+        for i in {1..10}; do
+          echo "Attempt $i: Checking for branch $BRANCH_TO_CHECK"
+          if git ls-remote --heads origin "refs/heads/$BRANCH_TO_CHECK" | grep -q "$BRANCH_TO_CHECK"; then
+            echo "Branch '$BRANCH_TO_CHECK' is available."
+            break
+          else
+            echo "Branch '$BRANCH_TO_CHECK' not yet available. Waiting..."
+            sleep 6
+          fi
+          if [ "$i" -eq 10 ]; then
+            echo "Error: Branch '$BRANCH_TO_CHECK' did not become available after 10 attempts."
+            exit 1
+          fi
+        done
