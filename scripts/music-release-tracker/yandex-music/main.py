@@ -37,9 +37,6 @@ def is_exact_match(artist: str, title: str, payload: dict) -> bool:
     n_title = norm(title)
 
     for track in tracks:
-        version = track.get("version") or ""
-        if version:
-            continue
         if norm(track.get("title", "")) != n_title:
             continue
         artists = [norm(a.get("name", "")) for a in track.get("artists", [])]
@@ -52,12 +49,19 @@ def is_exact_match(artist: str, title: str, payload: dict) -> bool:
 
 def build_dict(artist: str, tracks: list[str]) -> dict:
     result = {"yandex_music": {}}
-    for title in tracks:
-        try:
-            payload = fetch_search(artist, title)
-            found = is_exact_match(artist, title, payload)
-        except Exception:
-            found = False
+    for idx, title in enumerate(tracks):
+        payload = fetch_search(artist, title)
+        tracks_list = (
+            payload.get("result", {})
+            .get("tracks", {})
+            .get("results", [])
+        )
+
+        sys.stderr.write(
+            f"[yandex] '{title}': got {len(tracks_list)} candidates\n"
+        )
+
+        found = is_exact_match(artist, title, payload)
         result["yandex_music"][title] = [1 if found else 0]
     return result
 

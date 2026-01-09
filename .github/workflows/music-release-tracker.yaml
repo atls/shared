@@ -1,4 +1,4 @@
-name: Build music dict
+name: Check music releases
 
 on:
   workflow_dispatch:
