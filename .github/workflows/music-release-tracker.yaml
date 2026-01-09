@@ -1,0 +1,42 @@
+name: Build music dict
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-music-dict:
+    runs-on: ubuntu-latest
+    env:
+      ARTIST: "Imagine Dragons"
+      TRACKS: |
+        Radioactive
+        Demons
+        Warriors
+        Bones
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Yandex Music
+        run: |
+          python scripts/music-release-tracker/yandex-music/main.py
+          cat yandex_dict.yaml
+
+      - name: Spotify
+        env:
+          SPOTIFY_TOKEN: ${{ secrets.SPOTIFY_TOKEN }}
+        run: |
+          echo "TODO: get spotify token"
+          # python scripts/music-release-tracker/spotify/main.py
+          # cat spotify_dict.yaml
+
+      - name: Apple Music
+        run: |
+          python scripts/music-release-tracker/apple-music/main.py
+          cat apple_music_dict.yaml
