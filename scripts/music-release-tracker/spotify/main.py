@@ -48,11 +48,8 @@ def is_exact_match(artist: str, title: str, payload: dict) -> bool:
 def build_dict(token: str, artist: str, tracks: list[str]) -> dict:
     result = {"spotify": {}}
     for title in tracks:
-        try:
-            payload = fetch_search(token, artist, title)
-            found = is_exact_match(artist, title, payload)
-        except Exception:
-            found = False
+        payload = fetch_search(token, artist, title)
+        found = is_exact_match(artist, title, payload)
         result["spotify"][title] = [1 if found else 0]
     return result
 

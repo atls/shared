@@ -31,8 +31,9 @@ jobs:
 
       - name: Yandex Music
         run: |
-          python scripts/music-release-tracker/yandex-music/main.py
-          cat yandex_dict.yaml
+          echo "TODO: fix 451 error"
+          # python scripts/music-release-tracker/yandex-music/main.py
+          # cat yandex_dict.yaml
 
       - name: Spotify
         env:

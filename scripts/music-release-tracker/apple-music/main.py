@@ -13,7 +13,6 @@ def norm(s: str) -> str:
 
 def fetch_search(country: str, artist: str, title: str) -> dict:
     term = f"{artist} {title}"
-    q = urllib.parse.quote(term)
     params = {
         "term": term,
         "media": "music",
@@ -23,7 +22,6 @@ def fetch_search(country: str, artist: str, title: str) -> dict:
     }
     qs = urllib.parse.urlencode(params)
     url = f"https://itunes.apple.com/search?{qs}"
-
     req = urllib.request.Request(
         url,
         headers={
@@ -54,15 +52,10 @@ def is_exact_match(artist: str, title: str, payload: dict) -> bool:
 
 def build_dict(country: str, artist: str, tracks: list[str]) -> dict:
     result = {"apple_music": {}}
-
     for title in tracks:
-        try:
-            payload = fetch_search(country, artist, title)
-            found = is_exact_match(artist, title, payload)
-        except Exception:
-            found = False
+        payload = fetch_search(country, artist, title)
+        found = is_exact_match(artist, title, payload)
         result["apple_music"][title] = [1 if found else 0]
-
     return result
 
 
