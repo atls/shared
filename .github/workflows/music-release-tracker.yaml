@@ -2,6 +2,12 @@ name: Build music dict
 
 on:
   workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
 
 jobs:
   build-music-dict:
