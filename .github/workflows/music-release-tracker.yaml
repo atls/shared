@@ -55,3 +55,36 @@ jobs:
           python scripts/music-release-tracker/youtube-music/main.py
           cat dict.yaml
 
+      - name: Music summary
+        run: |
+          python - << 'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import json
+
+          with open("dict.yaml", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          platforms = set()
+          for v in data.values():
+              platforms.update(v.keys())
+          platforms = sorted(platforms)
+
+          def fmt_status(val):
+              if val == 1:
+                  return "✅"
+              if val == 0:
+                  return "❌"
+              return "⚠️ unknown"
+
+          print("## Music availability\n")
+          header = "| Track | " + " | ".join(platforms) + " |"
+          sep = "| --- | " + " | ".join(["---"] * len(platforms)) + " |"
+          print(header)
+          print(sep)
+
+          for track in sorted(data.keys()):
+              row = [track]
+              for p in platforms:
+                  val = data[track].get(p, "unknown")
+                  row.append(fmt_status(val))
+              print("| " + " | ".join(row) + " |")
+          EOF
