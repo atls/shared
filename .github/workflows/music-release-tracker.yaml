@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "TODO: fix 451 error"
           # python scripts/music-release-tracker/yandex-music/main.py
-          # cat yandex_dict.yaml
+          # cat dict.yaml
 
       - name: Spotify
         env:
@@ -41,9 +41,17 @@ jobs:
         run: |
           echo "TODO: get spotify token"
           # python scripts/music-release-tracker/spotify/main.py
-          # cat spotify_dict.yaml
+          # cat dict.yaml
 
       - name: Apple Music
         run: |
           python scripts/music-release-tracker/apple-music/main.py
-          cat apple_music_dict.yaml
+          cat dict.yaml
+
+      - name: YouTube Music
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: |
+          python scripts/music-release-tracker/youtube-music/main.py
+          cat dict.yaml
+

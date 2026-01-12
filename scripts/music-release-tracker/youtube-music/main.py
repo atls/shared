@@ -9,24 +9,23 @@ from typing import Any
 
 
 DICT_PATH = "dict.yaml"
-PLATFORM = "apple_music"
+PLATFORM = "youtube_music"
 
 
 def norm(s: str) -> str:
     return " ".join(s.lower().split())
 
 
-def fetch_search(country: str, artist: str, title: str) -> dict:
-    term = f"{artist} {title}"
+def fetch_search(api_key: str, artist: str, title: str) -> dict:
+    query = f"{artist} {title}"
     params = {
-        "term": term,
-        "media": "music",
-        "entity": "song",
-        "country": country,
-        "limit": "50",
+        "part": "snippet",
+        "type": "video",
+        "maxResults": "25",
+        "q": query,
+        "key": api_key,
     }
-    qs = urllib.parse.urlencode(params)
-    url = f"https://itunes.apple.com/search?{qs}"
+    url = "https://www.googleapis.com/youtube/v3/search?" + urllib.parse.urlencode(params)
     req = urllib.request.Request(
         url,
         headers={
@@ -40,17 +39,18 @@ def fetch_search(country: str, artist: str, title: str) -> dict:
 
 
 def is_exact_match(artist: str, title: str, payload: dict) -> bool:
-    results = payload.get("results", [])
+    items = payload.get("items", [])
 
     n_artist = norm(artist)
     n_title = norm(title)
 
-    for item in results:
-        if norm(item.get("trackName", "")) != n_title:
-            continue
-        if norm(item.get("artistName", "")) != n_artist:
-            continue
-        return True
+    for item in items:
+        snippet = item.get("snippet", {}) or {}
+        t = norm(snippet.get("title", ""))
+        channel = norm(snippet.get("channelTitle", ""))
+
+        if n_title in t and (n_artist in t or n_artist in channel):
+            return True
 
     return False
 
@@ -75,9 +75,13 @@ def save_dict(path: str, data: dict[str, Any]) -> None:
 
 
 def main() -> None:
+    api_key = os.getenv("YOUTUBE_API_KEY", "").strip()
     artist = os.getenv("ARTIST", "").strip()
     tracks_raw = os.getenv("TRACKS", "")
-    country = os.getenv("APPLE_COUNTRY", "US").strip() or "US"
+
+    if not api_key:
+        sys.stderr.write("YOUTUBE_API_KEY должен быть задан в env\n")
+        sys.exit(1)
 
     if not artist or not tracks_raw.strip():
         sys.stderr.write("ARTIST и TRACKS должны быть заданы в env\n")
@@ -92,7 +96,7 @@ def main() -> None:
 
     for title in tracks:
         try:
-            payload = fetch_search(country, artist, title)
+            payload = fetch_search(api_key, artist, title)
             found = is_exact_match(artist, title, payload)
             status: Any = 1 if found else 0
         except Exception as e:

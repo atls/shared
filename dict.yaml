@@ -1,0 +1,17 @@
+{
+  "Radioactive": {
+    "youtube_music": 1,
+    "apple_music": 1,
+    "yandex_music": 1
+  },
+  "Demons": {
+    "youtube_music": 1,
+    "apple_music": 1,
+    "yandex_music": 1
+  },
+  "Warriors": {
+    "youtube_music": 1,
+    "apple_music": 1,
+    "yandex_music": 0
+  }
+}

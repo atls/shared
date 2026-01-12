@@ -5,6 +5,11 @@ import re
 import sys
 import urllib.parse
 import urllib.request
+from typing import Any
+
+
+DICT_PATH = "dict.yaml"
+PLATFORM = "spotify"
 
 
 def norm(s: str) -> str:
@@ -45,27 +50,23 @@ def is_exact_match(artist: str, title: str, payload: dict) -> bool:
     return False
 
 
-def build_dict(token: str, artist: str, tracks: list[str]) -> dict:
-    result = {"spotify": {}}
-    for title in tracks:
-        payload = fetch_search(token, artist, title)
-        found = is_exact_match(artist, title, payload)
-        result["spotify"][title] = [1 if found else 0]
-    return result
-
-
-def to_yaml(data: dict) -> str:
-    lines = []
-    for platform, mapping in data.items():
-        lines.append(f"{platform}:")
-        for track_name, value in mapping.items():
-            safe = track_name.replace('"', '\\"')
-            lines.append(f'  "{safe}": [{value[0]}]')
-    return "\n".join(lines)
-
-
 def parse_tracks(arg: str) -> list[str]:
     return [t.strip() for t in re.split(r"[;\n]", arg) if t.strip()]
+
+
+def load_dict(path: str) -> dict[str, Any]:
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read().strip()
+        if not content:
+            return {}
+        return json.loads(content)
+
+
+def save_dict(path: str, data: dict[str, Any]) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def main() -> None:
@@ -86,11 +87,29 @@ def main() -> None:
         sys.stderr.write("TRACKS пустой после парсинга\n")
         sys.exit(1)
 
-    data = build_dict(token, artist, tracks)
-    yaml_str = to_yaml(data)
+    data: dict[str, Any] = load_dict(DICT_PATH)
 
-    with open("spotify_dict.yaml", "w", encoding="utf-8") as f:
-        f.write(yaml_str)
+    for title in tracks:
+        try:
+            payload = fetch_search(token, artist, title)
+            found = is_exact_match(artist, title, payload)
+            status: Any = 1 if found else 0
+        except Exception as e:
+            sys.stderr.write(f"[{PLATFORM}] error for '{title}': {e}\n")
+            status = "unknown"
+
+        if status not in (0, 1, "unknown"):
+            status = "unknown"
+
+        if title not in data:
+            data[title] = {}
+        entry = data[title]
+        if not isinstance(entry, dict):
+            entry = {}
+            data[title] = entry
+        entry[PLATFORM] = status
+
+    save_dict(DICT_PATH, data)
 
 
 if __name__ == "__main__":
