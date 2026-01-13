@@ -10,8 +10,8 @@ on:
       - synchronize
 
 jobs:
-  build-music-dict:
-    runs-on: ubuntu-latest
+  check-music-releases:
+    runs-on: self-hosted
     env:
       ARTIST: "Imagine Dragons"
       TRACKS: |
