@@ -32,7 +32,6 @@ jobs:
       - name: Yandex Music
         run: |
           python scripts/music-release-tracker/yandex-music/main.py
-          cat dict.yaml
 
       - name: Spotify
         env:
@@ -40,19 +39,16 @@ jobs:
         run: |
           echo "TODO: get spotify token"
           # python scripts/music-release-tracker/spotify/main.py
-          # cat dict.yaml
 
       - name: Apple Music
         run: |
           python scripts/music-release-tracker/apple-music/main.py
-          cat dict.yaml
 
       - name: YouTube Music
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
           python scripts/music-release-tracker/youtube-music/main.py
-          cat dict.yaml
 
       - name: Music summary
         run: |
