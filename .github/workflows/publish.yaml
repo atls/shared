@@ -63,10 +63,10 @@ jobs:
         run: yarn install --inline-builds
 
       - name: List changed workspaces
-        run: yarn workspaces changed list
+        run: yarn workspaces changed list --json
 
       - name: Version
-        run: yarn workspaces changed foreach -vpj 2 --no-private --exclude . version patch -i
+        run: yarn workspaces changed foreach -v --no-private --exclude . version patch -i
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -76,7 +76,7 @@ jobs:
 
       - name: Changelog
         if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -vpj 2 --exclude . changelog generate
+        run: yarn workspaces changed foreach -v --no-private --exclude . changelog generate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -86,7 +86,7 @@ jobs:
 
       - name: Release
         if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -vpj 2 --exclude . release create
+        run: yarn workspaces changed foreach -v --no-private --exclude . release create
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -99,7 +99,7 @@ jobs:
 
       - name: Npm Publish
         if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -vpj 2 --no-private --exclude . npm publish --access public
+        run: yarn workspaces changed foreach -v --no-private --exclude . npm publish --access public
         env:
           YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
 
@@ -109,7 +109,7 @@ jobs:
         run: |
           INITIAL_MESSAGE=$'chore(common): versions\n\n'
           temp_file=$(mktemp)
-          yarn workspaces changed foreach -vpj 2 --exclude . exec "echo \"\$npm_package_name:\$npm_package_version \" >> $temp_file"
+          yarn workspaces changed foreach -v --exclude . exec "echo \"\$npm_package_name:\$npm_package_version \" >> $temp_file"
           MESSAGE=$(cat $temp_file)
           echo $(cat $temp_file)
           INITIAL_MESSAGE+=$MESSAGE
