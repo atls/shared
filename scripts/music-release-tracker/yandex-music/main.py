@@ -5,7 +5,7 @@ import re
 import sys
 import urllib.parse
 import urllib.request
-from typing import Any
+from typing import Any, Tuple, Optional
 
 
 DICT_PATH = "dict.yaml"
@@ -31,7 +31,7 @@ def fetch_search(artist: str, title: str) -> dict:
     return json.loads(data)
 
 
-def is_exact_match(artist: str, title: str, payload: dict) -> bool:
+def find_match(artist: str, title: str, payload: dict) -> Tuple[bool, Optional[str]]:
     tracks = (
         payload.get("result", {})
         .get("tracks", {})
@@ -44,12 +44,26 @@ def is_exact_match(artist: str, title: str, payload: dict) -> bool:
     for track in tracks:
         if norm(track.get("title", "")) != n_title:
             continue
+
         artists = [norm(a.get("name", "")) for a in track.get("artists", [])]
         if n_artist not in artists:
             continue
-        return True
 
-    return False
+        release_date: Optional[str] = None
+        albums = track.get("albums") or []
+        if albums:
+            album = albums[0]
+            rd = album.get("releaseDate")
+            if isinstance(rd, str) and rd:
+                release_date = rd.split("T", 1)[0]
+            else:
+                year = album.get("year")
+                if year:
+                    release_date = str(year)
+
+        return True, release_date
+
+    return False, None
 
 
 def parse_tracks_arg(arg: str) -> list[str]:
@@ -89,22 +103,33 @@ def main() -> None:
     for title in tracks:
         try:
             payload = fetch_search(artist, title)
-            found = is_exact_match(artist, title, payload)
-            status: Any = 1 if found else 0
+            found, rd = find_match(artist, title, payload)
+            if found:
+                status: Any = 1
+                release_date: Optional[str] = rd
+            else:
+                status = 0
+                release_date = None
         except Exception as e:
             sys.stderr.write(f"[{PLATFORM}] error for '{title}': {e}\n")
             status = "unknown"
+            release_date = None
 
         if status not in (0, 1, "unknown"):
             status = "unknown"
 
-        if title not in data:
-            data[title] = {}
-        entry = data[title]
-        if not isinstance(entry, dict):
-            entry = {}
-            data[title] = entry
-        entry[PLATFORM] = status
+        track_entry = data.get(title)
+        if not isinstance(track_entry, dict):
+            track_entry = {}
+            data[title] = track_entry
+
+        platform_entry = track_entry.get(PLATFORM)
+        if not isinstance(platform_entry, dict):
+            platform_entry = {}
+            track_entry[PLATFORM] = platform_entry
+
+        platform_entry["status"] = status
+        platform_entry["release_date"] = release_date
 
     save_dict(DICT_PATH, data)
 
