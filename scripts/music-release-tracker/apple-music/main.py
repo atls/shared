@@ -5,6 +5,7 @@ import re
 import sys
 import urllib.parse
 import urllib.request
+import traceback
 from typing import Any, Tuple, Optional
 
 
@@ -117,6 +118,7 @@ def main() -> None:
                 release_date = None
         except Exception as e:
             sys.stderr.write(f"[{PLATFORM}] error for '{title}': {e}\n")
+            traceback.print_exc()
             status = "unknown"
             release_date = None
 
