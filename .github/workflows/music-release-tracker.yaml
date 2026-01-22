@@ -58,17 +58,35 @@ jobs:
           with open("dict.yaml", "r", encoding="utf-8") as f:
               data = json.load(f)
 
+          if not data:
+              print("## Music availability\n")
+              print("_dict.yaml is empty_")
+              raise SystemExit(0)
+
           platforms = set()
           for v in data.values():
-              platforms.update(v.keys())
+              if isinstance(v, dict):
+                  platforms.update(v.keys())
           platforms = sorted(platforms)
 
-          def fmt_status(val):
-              if val == 1:
-                  return "✅"
-              if val == 0:
-                  return "❌"
-              return "⚠️ unknown"
+          def fmt_cell(entry):
+              if not isinstance(entry, dict):
+                  return "⚠️ unknown"
+              status = entry.get("status", "unknown")
+              release_date = entry.get("release_date")
+
+              if status == 1:
+                  icon = "✅"
+              elif status == 0:
+                  icon = "❌"
+              else:
+                  icon = "⚠️"
+
+              if release_date:
+                  return f"{icon} {release_date}"
+              if status == "unknown":
+                  return f"{icon} unknown"
+              return icon
 
           print("## Music availability\n")
           header = "| Track | " + " | ".join(platforms) + " |"
@@ -77,9 +95,10 @@ jobs:
           print(sep)
 
           for track in sorted(data.keys()):
+              track_entry = data.get(track) or {}
               row = [track]
               for p in platforms:
-                  val = data[track].get(p, "unknown")
-                  row.append(fmt_status(val))
+                  cell = fmt_cell(track_entry.get(p))
+                  row.append(cell)
               print("| " + " | ".join(row) + " |")
           EOF
