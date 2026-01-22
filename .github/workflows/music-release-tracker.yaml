@@ -13,12 +13,11 @@ jobs:
   check-music-releases:
     runs-on: self-hosted
     env:
-      ARTIST: "Imagine Dragons"
+      ARTIST: "Torin Asakura"
       TRACKS: |
-        Radioactive
-        Demons
-        Warriors
-        Bones
+        One More Night
+        Robocop Origin
+        Малинки
 
     steps:
       - name: Checkout
@@ -48,7 +47,8 @@ jobs:
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
-          python scripts/music-release-tracker/youtube-music/main.py
+          echo "TODO: get release_date for songs"
+          # python scripts/music-release-tracker/youtube-music/main.py
 
       - name: Music summary
         run: |

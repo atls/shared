@@ -11,9 +11,18 @@ from typing import Any, Tuple, Optional
 DICT_PATH = "dict.yaml"
 PLATFORM = "spotify"
 
+_SPECIAL_SPLIT_RE = re.compile(r"[-–—\(\[\{\:\/]")
 
-def norm(s: str) -> str:
+
+def norm_artist(s: str) -> str:
     return " ".join(s.lower().split())
+
+
+def norm_title(s: str) -> str:
+    if not s:
+        return ""
+    part = _SPECIAL_SPLIT_RE.split(s, 1)[0]
+    return " ".join(part.lower().split())
 
 
 def fetch_search(token: str, artist: str, title: str) -> dict:
@@ -36,14 +45,14 @@ def fetch_search(token: str, artist: str, title: str) -> dict:
 def find_match(artist: str, title: str, payload: dict) -> Tuple[bool, Optional[str]]:
     tracks = payload.get("tracks", {}).get("items", [])
 
-    n_artist = norm(artist)
-    n_title = norm(title)
+    n_artist = norm_artist(artist)
+    n_title = norm_title(title)
 
     for track in tracks:
-        if norm(track.get("name", "")) != n_title:
+        if norm_title(track.get("name", "")) != n_title:
             continue
 
-        artists = [norm(a.get("name", "")) for a in track.get("artists", [])]
+        artists = [norm_artist(a.get("name", "")) for a in track.get("artists", [])]
         if n_artist not in artists:
             continue
 

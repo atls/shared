@@ -11,16 +11,25 @@ from typing import Any, Tuple, Optional
 DICT_PATH = "dict.yaml"
 PLATFORM = "youtube_music"
 
+_SPECIAL_SPLIT_RE = re.compile(r"[-–—\(\[\{\:\/]")
 
-def norm(s: str) -> str:
+
+def norm_artist(s: str) -> str:
     return " ".join(s.lower().split())
+
+
+def norm_title(s: str) -> str:
+    if not s:
+        return ""
+    part = _SPECIAL_SPLIT_RE.split(s, 1)[0]
+    return " ".join(part.lower().split())
 
 
 def fetch_search(api_key: str, artist: str, title: str) -> dict:
     query = f"{artist} {title}"
     params = {
         "part": "snippet",
-        "type": "video",
+        "type": "track",
         "maxResults": "25",
         "q": query,
         "key": api_key,
@@ -41,20 +50,38 @@ def fetch_search(api_key: str, artist: str, title: str) -> dict:
 def find_match(artist: str, title: str, payload: dict) -> Tuple[bool, Optional[str]]:
     items = payload.get("items", [])
 
-    n_artist = norm(artist)
-    n_title = norm(title)
+    n_artist = norm_artist(artist)
+    n_title = norm_title(title)
 
     for item in items:
         snippet = item.get("snippet", {}) or {}
-        t = norm(snippet.get("title", ""))
-        channel = norm(snippet.get("channelTitle", ""))
+        raw_title = snippet.get("title", "") or ""
+        channel = snippet.get("channelTitle", "") or ""
 
-        if n_title in t and (n_artist in t or n_artist in channel):
-            rd = snippet.get("publishedAt")
-            release_date = None
-            if isinstance(rd, str) and rd:
-                release_date = rd.split("T", 1)[0]
-            return True, release_date
+        parts = re.split(r"[-–—]", raw_title, maxsplit=1)
+        if len(parts) == 2:
+            artist_part, title_part = parts[0], parts[1]
+        else:
+            artist_part, title_part = "", raw_title
+
+        candidate_artists = set()
+        if artist_part:
+            candidate_artists.add(norm_artist(artist_part))
+        if channel:
+            candidate_artists.add(norm_artist(channel))
+
+        if n_artist not in candidate_artists:
+            continue
+
+        if norm_title(title_part) != n_title:
+            continue
+
+        rd = snippet.get("publishedAt")
+        release_date = None
+        if isinstance(rd, str) and rd:
+            release_date = rd.split("T", 1)[0]
+
+        return True, release_date
 
     return False, None
 

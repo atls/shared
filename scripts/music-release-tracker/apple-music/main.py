@@ -11,9 +11,18 @@ from typing import Any, Tuple, Optional
 DICT_PATH = "dict.yaml"
 PLATFORM = "apple_music"
 
+_SPECIAL_SPLIT_RE = re.compile(r"[-–—\(\[\{\:\/]")
 
-def norm(s: str) -> str:
+
+def norm_artist(s: str) -> str:
     return " ".join(s.lower().split())
+
+
+def norm_title(s: str) -> str:
+    if not s:
+        return ""
+    part = _SPECIAL_SPLIT_RE.split(s, 1)[0]
+    return " ".join(part.lower().split())
 
 
 def fetch_search(country: str, artist: str, title: str) -> dict:
@@ -42,13 +51,13 @@ def fetch_search(country: str, artist: str, title: str) -> dict:
 def find_match(artist: str, title: str, payload: dict) -> Tuple[bool, Optional[str]]:
     results = payload.get("results", [])
 
-    n_artist = norm(artist)
-    n_title = norm(title)
+    n_artist = norm_artist(artist)
+    n_title = norm_title(title)
 
     for item in results:
-        if norm(item.get("trackName", "")) != n_title:
+        if norm_title(item.get("trackName", "")) != n_title:
             continue
-        if norm(item.get("artistName", "")) != n_artist:
+        if norm_artist(item.get("artistName", "")) != n_artist:
             continue
 
         release_date = None
