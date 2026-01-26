@@ -10,6 +10,10 @@ inputs:
     required: true
     description: Private key for GitHub App token
 
+  githubToken:
+    required: true
+    description: Token for GitHub Packages publish (packages:write)
+
   ref:
     required: false
     default: master
@@ -69,7 +73,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.workingDirectory }}
       env:
-        GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        GITHUB_TOKEN: ${{ inputs.githubToken }}
         GITHUB_ACTOR: ${{ github.actor }}
         GITHUB_REPOSITORY: ${{ github.repository }}
       run: ./gradlew ${{ inputs.gradleOptions }} ${{ inputs.gradleArguments }}
