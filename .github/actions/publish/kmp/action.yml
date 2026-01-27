@@ -1,0 +1,57 @@
+name: Reusable Gradle publish
+description: Reusable Gradle publish for KMP / Android libs
+
+inputs:
+  githubToken:
+    required: true
+    description: Token for GitHub Packages publish (packages:write)
+
+  workingDirectory:
+    required: false
+    default: .
+    description: Working directory for Gradle
+
+  javaVersion:
+    required: false
+    default: "21"
+    description: Java version
+
+  javaDistribution:
+    required: false
+    default: temurin
+    description: Java distribution
+
+  gradleArguments:
+    required: true
+    description: Gradle tasks
+
+  gradleOptions:
+    required: false
+    default: "--no-daemon --stacktrace"
+    description: Extra Gradle CLI options
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: ${{ inputs.javaDistribution }}
+        java-version: ${{ inputs.javaVersion }}
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v5
+
+    - name: Publish
+      shell: bash
+      working-directory: ${{ inputs.workingDirectory }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.githubToken }}
+        GITHUB_ACTOR: ${{ github.actor }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: ./gradlew ${{ inputs.gradleOptions }} ${{ inputs.gradleArguments }}
