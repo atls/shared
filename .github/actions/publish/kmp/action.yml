@@ -2,22 +2,9 @@ name: Reusable Gradle publish
 description: Reusable Gradle publish for KMP / Android libs
 
 inputs:
-  appId:
-    required: true
-    description: App ID for GitHub App token
-
-  appSecret:
-    required: true
-    description: Private key for GitHub App token
-
   githubToken:
     required: true
     description: Token for GitHub Packages publish (packages:write)
-
-  ref:
-    required: false
-    default: master
-    description: Git ref to checkout
 
   workingDirectory:
     required: false
@@ -46,18 +33,9 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Create GitHub App token
-      id: app-token
-      uses: actions/create-github-app-token@v1
-      with:
-        app-id: ${{ inputs.appId }}
-        private-key: ${{ inputs.appSecret }}
-
     - name: Checkout
       uses: actions/checkout@v5
       with:
-        token: ${{ steps.app-token.outputs.token }}
-        ref: ${{ inputs.ref }}
         fetch-depth: 0
 
     - name: Setup Java
