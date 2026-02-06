@@ -32,7 +32,7 @@ jobs:
 
       - name: Fetch issues
         id: issues
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           retries: ${{ inputs.retries }}
@@ -59,7 +59,7 @@ jobs:
 
       - name: Collect referenced issues from comments
         id: collect_refs
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           ISSUES: ${{ steps.issues.outputs.issues }}
         with:
@@ -118,7 +118,7 @@ jobs:
 
       - name: Filter refs
         id: filter_refs
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           REFS: ${{ steps.collect_refs.outputs.refs }}
         with:
@@ -133,7 +133,7 @@ jobs:
 
       - name: Find latest check-in comment in referenced issues
         id: check_status
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           REFS: ${{ steps.filter_refs.outputs.refs }}
         with:
