@@ -44,7 +44,7 @@ jobs:
 
       - name: Detect changes for this stack
         id: changed-files
-        uses: tj-actions/changed-files@v46.0.5
+        uses: tj-actions/changed-files@v47.0.1
         with:
           files: |
             ${{ inputs.stack_path }}/**
