@@ -289,7 +289,7 @@ jobs:
           EOF
 
       - name: Spell Check Repo
-        uses: crate-ci/typos@v1.35.1
+        uses: crate-ci/typos@v1.43.2
         with:
           config: ./typos.toml
 
