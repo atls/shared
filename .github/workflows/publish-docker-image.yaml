@@ -43,7 +43,7 @@ jobs:
         with:
           name: ci-builder
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Determine tags
         id: tags

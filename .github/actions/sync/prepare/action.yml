@@ -35,20 +35,20 @@ runs:
         owner: ${{ inputs.repositoryOwner }}
 
     - name: Checkout source repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         path: ${{ env.SOURCE_TMP_PATH }}
         token: ${{ steps.appTokenStep.outputs.token }}
 
     - name: Checkout target repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         path: ${{ env.TARGET_TMP_PATH }}
         token: ${{ steps.appTokenStep.outputs.token }}
         repository: ${{inputs.targetRepository}}
 
     - name: Checkout workflow repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ env.WORKFLOW_REPO }}
         path: ${{ env.WORKFLOW_TMP_PATH }}
