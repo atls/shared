@@ -129,7 +129,7 @@ jobs:
           yarn nx release
 
       - name: Commit changes
-        uses: planetscale/ghcommit-action@v0.2.17
+        uses: planetscale/ghcommit-action@v0.2.20
         if: ${{ inputs.isProd == true }}
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
