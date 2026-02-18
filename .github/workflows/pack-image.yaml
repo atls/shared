@@ -72,6 +72,9 @@ jobs:
         with:
           node-version: ${{ inputs.nodeVersion }}
 
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Yarn cache directory
         id: yarn-cache-dir-path
         run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
