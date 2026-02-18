@@ -91,7 +91,7 @@ jobs:
         run: yarn install --inline-builds
 
       - name: Setup Pack
-        uses: buildpacks/github-actions/setup-pack@v5
+        uses: buildpacks/github-actions/setup-pack@v5.10.0
 
       - name: Pack and publish
         if: ${{ !inputs.include && !inputs.exclude }}
