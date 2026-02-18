@@ -90,9 +90,8 @@ jobs:
       - name: Yarn install
         run: yarn install --inline-builds
 
-      - name: Install Buildpack CLI
-        run: |
-          (curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.36.2/pack-v0.36.2-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack)
+      - name: Setup Pack
+        uses: buildpacks/github-actions/setup-pack@v5
 
       - name: Pack and publish
         if: ${{ !inputs.include && !inputs.exclude }}
