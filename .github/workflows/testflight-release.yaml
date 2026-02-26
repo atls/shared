@@ -29,6 +29,12 @@ on:
         type: string
         required: false
         default: ""
+
+      pre_pod_install_command:
+        type: string
+        required: false
+        default: ""
+
     secrets:
       IOS_CERTIFICATE_P12_BASE64:
         required: true
@@ -95,6 +101,12 @@ jobs:
           key: xcode-derived-${{ runner.os }}-${{ hashFiles('**/*.pbxproj','**/*.xcodeproj/**','**/*.xcworkspace/**') }}
           restore-keys: |
             xcode-derived-${{ runner.os }}-
+
+      - name: Pre Pod Install
+        if: ${{ inputs.pre_pod_install_command != '' }}
+        run: |
+          set -euo pipefail
+          ${{ inputs.pre_pod_install_command }}
 
       - name: Install CocoaPods
         if: ${{ inputs.cocoapods_working_directory != '' }}
