@@ -46,6 +46,8 @@ on:
         required: true
       APP_STORE_CONNECT_API_PRIVATE_KEY:
         required: true
+      LOCAL_PROPERTIES_CONTENT:
+        required: true
 
 concurrency:
   group: ios-testflight-reusable-${{ github.workflow }}-${{ github.ref }}
@@ -102,6 +104,12 @@ jobs:
           key: xcode-derived-${{ runner.os }}-${{ hashFiles('**/*.pbxproj','**/*.xcodeproj/**','**/*.xcworkspace/**') }}
           restore-keys: |
             xcode-derived-${{ runner.os }}-
+
+      - name: Create local.properties
+        run: |
+          cat > local.properties <<'EOF'
+          ${{ secrets.LOCAL_PROPERTIES_CONTENT }}
+          EOF
 
       - name: Pre Pod Install
         if: ${{ inputs.pre_pod_install_command != '' }}
