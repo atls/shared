@@ -53,6 +53,7 @@ concurrency:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   release-to-testflight:
@@ -104,6 +105,9 @@ jobs:
 
       - name: Pre Pod Install
         if: ${{ inputs.pre_pod_install_command != '' }}
+        env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           ${{ inputs.pre_pod_install_command }}
