@@ -140,6 +140,13 @@ jobs:
           api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           api-private-key: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
 
+      - name: Resolve provisioning profile
+        run: |
+          set -euo pipefail
+          PROFILE_PATH="$(ls -t ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision | head -n 1)"
+          PROFILE_NAME="$(security cms -D -i "$PROFILE_PATH" | plutil -extract Name raw -)"
+          echo "IOS_PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
+
       - name: Archive
         run: |
           set -euo pipefail
@@ -151,7 +158,9 @@ jobs:
             -destination "generic/platform=iOS" \
             -archivePath "$RUNNER_TEMP/$IOS_SCHEME.xcarchive" \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
-            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="$IOS_PROFILE_NAME" \
             clean archive
 
       - name: Export IPA
