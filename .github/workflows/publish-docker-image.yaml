@@ -61,6 +61,7 @@ jobs:
         run: |
           echo "commitSha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
           echo "date=$(date +%s)" >> "$GITHUB_OUTPUT"
+          echo "repositoryOwner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push stage image
         if: ${{ inputs.isProd == false }}
@@ -70,8 +71,8 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ inputs.packageName }}:stage
-            ghcr.io/${{ github.repository_owner }}/${{ inputs.packageName }}:stage-${{ steps.tags.outputs.commitSha }}-${{ steps.tags.outputs.date }}
+            ghcr.io/${{ steps.tags.outputs.repositoryOwner }}/${{ inputs.packageName }}:stage
+            ghcr.io/${{ steps.tags.outputs.repositoryOwner }}/${{ inputs.packageName }}:stage-${{ steps.tags.outputs.commitSha }}-${{ steps.tags.outputs.date }}
           cache-from: type=gha,scope=${{ inputs.packageName }}
           cache-to: type=gha,scope=${{ inputs.packageName }}
           context: ${{ inputs.contextLocation }}
@@ -86,9 +87,9 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ inputs.packageName }}:latest
-            ghcr.io/${{ github.repository_owner }}/${{ inputs.packageName }}:prod
-            ghcr.io/${{ github.repository_owner }}/${{ inputs.packageName }}:prod-${{ steps.tags.outputs.commitSha }}-${{ steps.tags.outputs.date }}
+            ghcr.io/${{ steps.tags.outputs.repositoryOwner }}/${{ inputs.packageName }}:latest
+            ghcr.io/${{ steps.tags.outputs.repositoryOwner }}/${{ inputs.packageName }}:prod
+            ghcr.io/${{ steps.tags.outputs.repositoryOwner }}/${{ inputs.packageName }}:prod-${{ steps.tags.outputs.commitSha }}-${{ steps.tags.outputs.date }}
           cache-from: type=gha,scope=${{ inputs.packageName }}
           cache-to: type=gha,scope=${{ inputs.packageName }}
           context: ${{ inputs.contextLocation }}
