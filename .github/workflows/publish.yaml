@@ -76,7 +76,7 @@ jobs:
 
       - name: Changelog
         if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . changelog generate
+        run: yarn workspaces changed foreach -v --no-private --exclude . exec "yarn changelog generate"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -86,22 +86,17 @@ jobs:
 
       - name: Release
         if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . release create
+        run: yarn workspaces changed foreach -v --no-private --exclude . exec "yarn release create"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Force Yarn to use NPM Registry
-        if: ${{ !cancelled() }}
-        run: |
-          yarn config set npmScopes.atls.npmRegistryServer ${{ inputs.registryServer }}
-          yarn config set npmRegistryServer ${{ inputs.registryServer }}
-        shell: bash
-
       - name: Npm Publish
         if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . npm publish --access public
+        run: yarn workspaces changed foreach -v --no-private --exclude . npm publish --tolerate-republish --access public
         env:
           YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
+          YARN_NPM_REGISTRY_SERVER: ${{ inputs.registryServer }}
+          YARN_NPM_PUBLISH_REGISTRY: ${{ inputs.registryServer }}
 
       - name: Compose commit message
         if: ${{ !cancelled() }}
