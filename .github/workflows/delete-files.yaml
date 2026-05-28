@@ -1,0 +1,86 @@
+name: Reusable file deletion
+
+on:
+  workflow_call:
+    inputs:
+      appId:
+        description: App ID for committing changes
+        required: true
+        type: string
+      targetRepository:
+        description: Repository with files to delete
+        required: true
+        type: string
+      repositoryOwner:
+        description: Repository owner
+        required: true
+        type: string
+      branch:
+        description: Branch to commit to
+        required: false
+        type: string
+        default: master
+      files:
+        description: Newline-separated file paths to delete
+        required: true
+        type: string
+      commitMessage:
+        description: Commit message
+        required: false
+        type: string
+        default: 'chore(github): remove files'
+    secrets:
+      appSecret:
+        description: App private key
+        required: true
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ inputs.appId }}
+          private-key: ${{ secrets.appSecret }}
+          owner: ${{ inputs.repositoryOwner }}
+          repositories: ${{ inputs.targetRepository }}
+
+      - uses: actions/checkout@v6
+        with:
+          repository: ${{ inputs.repositoryOwner }}/${{ inputs.targetRepository }}
+          ref: ${{ inputs.branch }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Delete files
+        id: files
+        env:
+          FILES: ${{ inputs.files }}
+        run: |
+          files=()
+
+          while IFS= read -r file; do
+            if [ -z "$file" ]; then
+              continue
+            fi
+
+            files+=("$file")
+
+            if [ -e "$file" ]; then
+              rm -rf -- "$file"
+            fi
+          done <<< "$FILES"
+
+          echo "file_pattern=${files[*]}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit deletions
+        uses: planetscale/ghcommit-action@v0.2.20
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        with:
+          repo: ${{ inputs.repositoryOwner }}/${{ inputs.targetRepository }}
+          branch: ${{ inputs.branch }}
+          commit_message: ${{ inputs.commitMessage }}
+          file_pattern: ${{ steps.files.outputs.file_pattern }}
