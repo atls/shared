@@ -76,7 +76,7 @@ jobs:
 
       - name: Changelog
         if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . exec "yarn changelog generate"
+        run: yarn workspaces changed foreach -v --no-private --exclude . changelog generate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -86,7 +86,7 @@ jobs:
 
       - name: Release
         if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . exec "yarn release create"
+        run: yarn workspaces changed foreach -v --no-private --exclude . release create
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
