@@ -111,7 +111,7 @@ jobs:
         if: ${{ inputs.isProd == false }}
         env:
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: | 
+        run: |
           export TAG_PREFIX=stage-
           export TAG_SUFFIX=stage
           export TAG_POLICY=ctx-hash-timestamp
