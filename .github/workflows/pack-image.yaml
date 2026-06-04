@@ -44,6 +44,9 @@ on:
       project:
         required: false
         description: 'Project name for publishing to registry. For GitHub - repo name.'
+      runtimeEnv:
+        required: false
+        description: 'Optional dotenv-style KEY=value lines exported before image pack.'
 
 jobs:
   run:
@@ -90,6 +93,31 @@ jobs:
       - name: Yarn install
         run: yarn install --inline-builds
 
+      - name: Export runtime environment
+        env:
+          RUNTIME_ENV: ${{ secrets.runtimeEnv }}
+        run: |
+          while IFS= read -r line || [ -n "$line" ]; do
+            line="${line%$'\r'}"
+
+            if [ -z "$line" ] || [[ "$line" == \#* ]]; then
+              continue
+            fi
+
+            if [[ "$line" != *=* ]]; then
+              echo "Invalid runtime env line: expected KEY=value"
+              exit 1
+            fi
+
+            value="${line#*=}"
+
+            if [ -n "$value" ]; then
+              echo "::add-mask::$value"
+            fi
+
+            echo "$line" >> "$GITHUB_ENV"
+          done <<< "$RUNTIME_ENV"
+
       - name: Setup Pack
         uses: buildpacks/github-actions/setup-pack@v5.10.0
 
@@ -116,12 +144,12 @@ jobs:
           PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
 
           IFS=',' read -r -a include_array <<< "${{ inputs.include }}"
-          INCLUDE_FLAGS=""
+          INCLUDE_FLAGS=()
           for ws in "${include_array[@]}"; do
-            INCLUDE_FLAGS+="--include \"$ws\" "
+            INCLUDE_FLAGS+=(--include "$ws")
           done
 
-          yarn workspaces foreach --all $INCLUDE_FLAGS image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+          yarn workspaces foreach --all "${INCLUDE_FLAGS[@]}" image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
 
       - name: Pack and publish without excluded
         if: ${{ !inputs.include && inputs.exclude }}
@@ -134,9 +162,9 @@ jobs:
           PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
 
           IFS=',' read -r -a include_array <<< "${{ inputs.exclude }}"
-          EXCLUDE_FLAGS=""
+          EXCLUDE_FLAGS=()
           for ws in "${include_array[@]}"; do
-            EXCLUDE_FLAGS+="--exclude \"$ws\" "
+            EXCLUDE_FLAGS+=(--exclude "$ws")
           done
 
-          yarn workspaces foreach --all $EXCLUDE_FLAGS image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+          yarn workspaces foreach --all "${EXCLUDE_FLAGS[@]}" image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
