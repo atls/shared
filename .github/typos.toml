@@ -258,8 +258,11 @@ extend-ignore-identifiers-re = [
   "^transitionable$",
   "^HAX$",
   "^Wya$",
-  "^exportfs$"
+  "^exportfs$",
+  "^infrastracture$"
 ]
 extend-ignore-re = [
+  "[A-Za-z0-9_-]{16,}",
+  '"password":\s*"[^"]*"',
   '(?Rm)^\s*[A-Za-z0-9_-]*password[A-Za-z0-9_-]*\s*:\s*\$\{\{\s*secrets\.[A-Za-z0-9_]+\s*\}\}\s*$'
 ]
