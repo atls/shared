@@ -13,6 +13,11 @@ on:
         default: '1.55.0'
         required: false
         type: string
+      checksCommand:
+        description: 'Command to run project checks. Default: yarn checks run'
+        default: 'yarn checks run'
+        required: false
+        type: string
 
 jobs:
   checks:
@@ -58,6 +63,6 @@ jobs:
           fi
 
       - name: Checks
-        run: yarn checks run
+        run: ${{ inputs.checksCommand }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
