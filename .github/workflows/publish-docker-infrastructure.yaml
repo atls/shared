@@ -58,7 +58,11 @@ jobs:
           echo "Changed dirs:"
           echo "$CHANGED_DIRS"
 
-          echo "dirs=$CHANGED_DIRS" >> "$GITHUB_OUTPUT"
+          {
+            echo 'dirs<<EOF'
+            echo "$CHANGED_DIRS"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build changed images
         if: steps.collect_dirs.outputs.dirs != ''
