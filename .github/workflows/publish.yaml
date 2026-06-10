@@ -65,8 +65,13 @@ jobs:
       - name: List changed workspaces
         run: yarn workspaces changed list --json
 
+      - name: Defer versions
+        run: yarn release version defer
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+
       - name: Version
-        run: yarn workspaces changed foreach -v --no-private --exclude . version patch -i
+        run: yarn version apply --all
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
