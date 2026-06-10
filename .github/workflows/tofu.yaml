@@ -9,6 +9,10 @@ on:
       stack_path:
         required: true
         type: string
+      dependency_paths:
+        required: false
+        type: string
+        default: ""
     secrets:
       YC_S3_ACCESS_KEY:
         required: true
@@ -49,6 +53,7 @@ jobs:
           include_all_old_new_renamed_files: true
           files: |
             ${{ inputs.stack_path }}/**
+            ${{ inputs.dependency_paths }}
 
       - name: Tofu plan
         if: ${{ github.event_name != 'push' && (steps.changed-files.outputs.any_changed == 'true' || steps.changed-files.outputs.any_deleted == 'true') }}
