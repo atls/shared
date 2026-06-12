@@ -131,7 +131,7 @@ jobs:
         run: |
           PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
 
-          yarn workspaces changed foreach -vpj 2 image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+          yarn workspaces changed foreach --verbose --parallel --jobs 2 image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
 
       - name: Pack and publish included packages
         if: ${{ inputs.include }}
