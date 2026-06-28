@@ -8,6 +8,11 @@ on:
         default: '22'
         required: false
         type: string
+      installPlaywright:
+        description: 'Install Playwright browsers before checks'
+        default: false
+        required: false
+        type: boolean
       playwright-version:
         description: 'Playwright version to install. Default: 1.55.0'
         default: '1.55.0'
@@ -25,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Login to GHCR
-        run: echo $GITHUB_TOKEN | docker login ghcr.io -u $REPOSITORY_OWNER --password-stdin
+        run: printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io -u "$REPOSITORY_OWNER" --password-stdin
         env:
           REPOSITORY_OWNER: ${{ github.repository_owner }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -40,7 +45,7 @@ jobs:
 
       - name: Yarn cache directory
         id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache@v5
         id: yarn-cache
@@ -54,13 +59,8 @@ jobs:
         run: yarn install --inline-builds
 
       - name: Install playwright
-        run: |
-          if yarn why playwright 2>/dev/null | grep -q 'playwright'; then
-            echo "Playwright is present as a dependency. Installing..."
-            yarn dlx playwright@${{ inputs.playwright-version }} install --with-deps
-          else
-            echo "Playwright is not listed as a dependency. Skipping installation."
-          fi
+        if: ${{ inputs.installPlaywright }}
+        run: yarn dlx playwright@${{ inputs.playwright-version }} install --with-deps
 
       - name: Checks
         run: ${{ inputs.checksCommand }}
