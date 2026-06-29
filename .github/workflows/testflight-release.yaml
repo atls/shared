@@ -28,12 +28,12 @@ on:
       cocoapods_working_directory:
         type: string
         required: false
-        default: ""
+        default: ''
 
       pre_pod_install_command:
         type: string
         required: false
-        default: ""
+        default: ''
 
     secrets:
       IOS_CERTIFICATE_P12_BASE64:
@@ -75,7 +75,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
 
       - uses: actions/cache@v5
         with:
