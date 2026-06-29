@@ -12,7 +12,7 @@ on:
       dependency_paths:
         required: false
         type: string
-        default: ""
+        default: ''
     secrets:
       YC_S3_ACCESS_KEY:
         required: true
@@ -33,9 +33,9 @@ jobs:
       checks: write
 
     env:
-      AWS_ACCESS_KEY_ID:     ${{ secrets.YC_S3_ACCESS_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.YC_S3_ACCESS_KEY }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_S3_SECRET_KEY }}
-      GITHUB_TOKEN:          ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
 
     defaults:
       run:
