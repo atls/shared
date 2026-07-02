@@ -29,14 +29,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3.2.0
         id: app-token
         with:
-          app-id: ${{ inputs.appId }}
+          client-id: ${{ inputs.appId }}
           private-key: ${{ secrets.appPrivateKey }}
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: master
           token: ${{ steps.app-token.outputs.token }}
@@ -51,7 +51,7 @@ jobs:
         id: yarn-cache-dir-path
         run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         id: yarn-cache
         with:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
