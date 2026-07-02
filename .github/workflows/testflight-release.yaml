@@ -70,14 +70,14 @@ jobs:
       EXPORT_OPTIONS_PLIST: ${{ inputs.export_options_plist }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.gradle/caches
@@ -86,7 +86,7 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         if: ${{ inputs.cocoapods_working_directory != '' }}
         with:
           path: |
@@ -98,7 +98,7 @@ jobs:
             pods-${{ runner.os }}-${{ inputs.cocoapods_working_directory }}-
             pods-${{ runner.os }}-
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: ~/Library/Developer/Xcode/DerivedData
           key: xcode-derived-${{ runner.os }}-${{ hashFiles('**/*.pbxproj','**/*.xcodeproj/**','**/*.xcworkspace/**') }}
