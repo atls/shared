@@ -24,10 +24,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3.2.0
         id: app-token
         with:
-          app-id: ${{ inputs.appId }}
+          client-id: ${{ inputs.appId }}
           private-key: ${{ secrets.appSecret }}
 
       - name: Set up Docker Buildx
@@ -39,7 +39,7 @@ jobs:
         run: |
           (curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.36.2/pack-v0.36.2-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack)
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
@@ -54,7 +54,7 @@ jobs:
         run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
 
       - name: Yarn cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: yarn-cache
         with:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
@@ -70,7 +70,7 @@ jobs:
           fi
 
       - name: Nextjs cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         if: steps.nextjs.outputs.needed == 'true'
         with:
           path: |
@@ -88,7 +88,7 @@ jobs:
           fi
 
       - name: Cargo cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         if: steps.cargo.outputs.needed == 'true'
         with:
           path: |
