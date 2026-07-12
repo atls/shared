@@ -4,8 +4,8 @@ on:
   workflow_call:
     inputs:
       node-version:
-        description: 'Node version to run this workflow. Default: 22'
-        default: '22'
+        description: 'Node version to run this workflow. Default: 24'
+        default: '24'
         required: false
         type: string
       installPlaywright:
