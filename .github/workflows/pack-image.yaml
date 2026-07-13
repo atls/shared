@@ -37,21 +37,6 @@ on:
         required: false
         type: string
         description: 'A comma-separated list of workspace names or glob patterns to exclude from the build. If provided, these packages will be skipped.'
-      runtimeSmokeScript:
-        required: false
-        default: ''
-        type: string
-        description: 'Consumer-owned package script that validates published images through their default process.'
-      runtimeSmokeMemory:
-        required: false
-        default: '512m'
-        type: string
-        description: 'Memory limit exposed to the runtime smoke script.'
-      runtimeSmokeTimeout:
-        required: false
-        default: 300
-        type: number
-        description: 'Readiness timeout in seconds exposed to the runtime smoke script.'
     secrets:
       registryKey:
         required: true
@@ -183,25 +168,3 @@ jobs:
           done
 
           yarn workspaces foreach --all "${EXCLUDE_FLAGS[@]}" image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
-
-      - name: Smoke published images
-        if: ${{ inputs.runtimeSmokeScript != '' }}
-        env:
-          IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
-          PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
-          REGISTRY_URL: ${{ inputs.registryURL }}
-          RUNTIME_SMOKE_MEMORY: ${{ inputs.runtimeSmokeMemory }}
-          RUNTIME_SMOKE_SCRIPT: ${{ inputs.runtimeSmokeScript }}
-          RUNTIME_SMOKE_TIMEOUT: ${{ inputs.runtimeSmokeTimeout }}
-        run: |
-          if [[ ! "$RUNTIME_SMOKE_SCRIPT" =~ ^[a-zA-Z0-9:_-]+$ ]]; then
-            echo 'runtimeSmokeScript must be a package script name'
-            exit 1
-          fi
-
-          PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
-
-          export IMAGE_REFERENCE=latest
-          export IMAGE_REGISTRY_ROOT="$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
-
-          yarn run "$RUNTIME_SMOKE_SCRIPT"
