@@ -13,11 +13,17 @@ on:
         required: false
         type: string
         default: ''
+      environment:
+        required: false
+        type: string
+        default: ''
     secrets:
       YC_S3_ACCESS_KEY:
         required: true
       YC_S3_SECRET_KEY:
         required: true
+      TOFU_VARIABLES:
+        required: false
       variables:
         required: false
 
@@ -25,6 +31,7 @@ jobs:
   tofu:
     name: ${{ inputs.stack_name }}
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || null }}
 
     permissions:
       contents: read
@@ -62,7 +69,7 @@ jobs:
           path: ${{ inputs.stack_path }}
           label: ${{ inputs.stack_name }}
           variables: |
-            ${{ secrets.variables }}
+            ${{ secrets.TOFU_VARIABLES || secrets.variables }}
 
       - name: Tofu apply
         if: ${{ github.event_name == 'push' && (steps.changed-files.outputs.any_changed == 'true' || steps.changed-files.outputs.any_deleted == 'true') }}
@@ -71,5 +78,5 @@ jobs:
           path: ${{ inputs.stack_path }}
           label: ${{ inputs.stack_name }}
           variables: |
-            ${{ secrets.variables }}
+            ${{ secrets.TOFU_VARIABLES || secrets.variables }}
           auto_approve: true
