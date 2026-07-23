@@ -37,6 +37,15 @@ on:
         required: false
         type: string
         description: 'A comma-separated list of workspace names or glob patterns to exclude from the build. If provided, these packages will be skipped.'
+      tagPolicy:
+        required: false
+        default: 'hash-timestamp'
+        type: string
+        description: 'Raijin image tag policy.'
+      tags:
+        required: false
+        type: string
+        description: 'A comma-separated list of additional Raijin image tags.'
     secrets:
       registryKey:
         required: true
@@ -65,7 +74,7 @@ jobs:
           REGISTRY_URL: ${{ inputs.registryURL }}
           ESCAPE_CHARACTERS: ${{ inputs.escapeCharactersInKey }}
         run: |
-          printf '%s' "$REGISTRY_KEY" | docker login $REGISTRY_URL -u $USERNAME --password-stdin
+          printf '%s' "$REGISTRY_KEY" | docker login "$REGISTRY_URL" -u "$USERNAME" --password-stdin
 
       - name: Checkout
         uses: actions/checkout@v7
@@ -80,7 +89,7 @@ jobs:
 
       - name: Yarn cache directory
         id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache@v6
         id: yarn-cache
@@ -128,10 +137,11 @@ jobs:
           REGISTRY_URL: ${{ inputs.registryURL }}
           PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
           IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
+          TAGS: ${{ inputs.tags }}
         run: |
           PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
 
-          yarn workspaces changed foreach --verbose --parallel --jobs 2 image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+          yarn workspaces changed foreach --verbose --parallel --jobs 2 image pack --publish --tag-policy "${{ inputs.tagPolicy }}" --tags "$TAGS" --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
 
       - name: Pack and publish included packages
         if: ${{ inputs.include }}
@@ -140,6 +150,7 @@ jobs:
           REGISTRY_URL: ${{ inputs.registryURL }}
           PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
           IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
+          TAGS: ${{ inputs.tags }}
         run: |
           PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
 
@@ -149,7 +160,7 @@ jobs:
             INCLUDE_FLAGS+=(--include "$ws")
           done
 
-          yarn workspaces foreach --all "${INCLUDE_FLAGS[@]}" image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+          yarn workspaces foreach --all "${INCLUDE_FLAGS[@]}" image pack --publish --tag-policy "${{ inputs.tagPolicy }}" --tags "$TAGS" --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
 
       - name: Pack and publish without excluded
         if: ${{ !inputs.include && inputs.exclude }}
@@ -158,6 +169,7 @@ jobs:
           REGISTRY_URL: ${{ inputs.registryURL }}
           PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
           IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
+          TAGS: ${{ inputs.tags }}
         run: |
           PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
 
@@ -167,4 +179,4 @@ jobs:
             EXCLUDE_FLAGS+=(--exclude "$ws")
           done
 
-          yarn workspaces foreach --all "${EXCLUDE_FLAGS[@]}" image pack --publish --tag-policy hash-timestamp --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+          yarn workspaces foreach --all "${EXCLUDE_FLAGS[@]}" image pack --publish --tag-policy "${{ inputs.tagPolicy }}" --tags "$TAGS" --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
