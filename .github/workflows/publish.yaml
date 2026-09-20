@@ -8,15 +8,20 @@ on:
         default: '24'
         required: false
         type: string
-      appId:
+      clientId:
         required: true
         type: string
-        description: App ID for committing changes
+        description: GitHub App client ID for committing changes
       registryServer:
         required: false
         type: string
         default: 'https://registry.npmjs.org'
         description: Where to send the package
+      packageAccess:
+        description: Access level for published packages
+        required: false
+        type: string
+        default: public
     secrets:
       appPrivateKey:
         required: true
@@ -32,7 +37,7 @@ jobs:
       - uses: actions/create-github-app-token@v3.2.0
         id: app-token
         with:
-          client-id: ${{ inputs.appId }}
+          client-id: ${{ inputs.clientId }}
           private-key: ${{ secrets.appPrivateKey }}
 
       - name: Checkout
@@ -97,8 +102,9 @@ jobs:
 
       - name: Npm Publish
         if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . npm publish --tolerate-republish --access public
+        run: yarn workspaces changed foreach -v --no-private --exclude . npm publish --tolerate-republish --access "$PACKAGE_ACCESS"
         env:
+          PACKAGE_ACCESS: ${{ inputs.packageAccess }}
           YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
           YARN_NPM_REGISTRY_SERVER: ${{ inputs.registryServer }}
           YARN_NPM_PUBLISH_REGISTRY: ${{ inputs.registryServer }}
