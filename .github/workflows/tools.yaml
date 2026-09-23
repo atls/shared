@@ -39,6 +39,8 @@ jobs:
 
       - name: Install
         run: yarn install --inline-builds
+        env:
+          SKILLS_NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update
         run: yarn set version atls
