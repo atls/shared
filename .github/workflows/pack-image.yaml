@@ -97,6 +97,8 @@ jobs:
 
       - name: Yarn install
         run: yarn install --inline-builds
+        env:
+          SKILLS_NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Export runtime environment
         env:
