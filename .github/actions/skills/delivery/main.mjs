@@ -7,8 +7,10 @@ const propertyName = 'skill_packages'
 const api = process.env.GITHUB_API_URL || 'https://api.github.com'
 const token = process.env.SKILL_DELIVERY_TOKEN
 const repository = process.env.SKILL_DELIVERY_REPOSITORY
+const command = process.env.SKILL_DELIVERY_COMMAND
 
-if (!token || !/^atls\/[a-z0-9-]+$/.test(repository || '')) throw new Error('Token and ATLS repository are required')
+if (!/^atls\/[a-z0-9-]+$/.test(repository || '')) throw new Error('ATLS repository is required')
+if (command !== 'update' && !token) throw new Error('Atlantis Courier token is required')
 
 const request = async (method, path, body) => {
   const response = await fetch(new URL(path, api), {
@@ -136,7 +138,7 @@ const notify = async () => {
   console.log(`Dispatched ${dispatched} skill package update(s)`)
 }
 
-if (process.env.SKILL_DELIVERY_COMMAND === 'register') await register()
-else if (process.env.SKILL_DELIVERY_COMMAND === 'notify') await notify()
-else if (process.env.SKILL_DELIVERY_COMMAND === 'update') update()
+if (command === 'register') await register()
+else if (command === 'notify') await notify()
+else if (command === 'update') update()
 else throw new Error('Unknown skill delivery command')

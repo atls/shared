@@ -6,8 +6,8 @@ inputs:
     description: register, notify, or update
     required: true
   token:
-    description: Atlantis Courier installation token
-    required: true
+    description: Atlantis Courier installation token for register and notify
+    required: false
   repository:
     description: owner/repository
     required: true
