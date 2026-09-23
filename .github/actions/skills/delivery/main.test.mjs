@@ -56,7 +56,7 @@ test('notifies only the repository subscribed to the published skill', async () 
     assert.equal(exit, 0, stderr)
     assert.deepEqual(dispatches, [{
       event_type: 'skill-package-updated',
-      client_payload: { package: '@atls/skill-dsm', version: '0.0.2' },
+      client_payload: { packages: ['@atls/skill-dsm'] },
     }])
   } finally {
     server.close()

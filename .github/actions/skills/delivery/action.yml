@@ -14,8 +14,8 @@ inputs:
   pull-number:
     description: Merged skills pull request number for notify
     required: false
-  package-name:
-    description: Published skill package name for update
+  package-names:
+    description: JSON array of published skill package names for update
     required: false
   package-token:
     description: Consumer GITHUB_TOKEN with package read access for update
@@ -25,9 +25,6 @@ outputs:
   subscribed:
     description: Whether the consumer declares the notified package
     value: ${{ steps.run.outputs.subscribed }}
-  package-slug:
-    description: Validated skill package slug
-    value: ${{ steps.run.outputs.package-slug }}
 
 runs:
   using: composite
@@ -39,6 +36,6 @@ runs:
         SKILL_DELIVERY_TOKEN: ${{ inputs.token }}
         SKILL_DELIVERY_REPOSITORY: ${{ inputs.repository }}
         SKILL_DELIVERY_PULL_NUMBER: ${{ inputs.pull-number }}
-        SKILL_DELIVERY_PACKAGE_NAME: ${{ inputs.package-name }}
+        SKILL_DELIVERY_PACKAGE_NAMES: ${{ inputs.package-names }}
         SKILL_DELIVERY_PACKAGE_TOKEN: ${{ inputs.package-token }}
       run: node "$GITHUB_ACTION_PATH/main.mjs"

@@ -58,17 +58,19 @@ const register = async () => {
 }
 
 const update = () => {
-  const name = process.env.SKILL_DELIVERY_PACKAGE_NAME || ''
-  const match = /^@atls\/skill-([a-z0-9]+(?:-[a-z0-9]+)*)$/.exec(name)
-  if (!match) throw new Error('Invalid skill package name')
+  const announced = JSON.parse(process.env.SKILL_DELIVERY_PACKAGE_NAMES || 'null')
+  if (!Array.isArray(announced) || announced.length === 0 || announced.some((name) => !/^@atls\/skill-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name))) {
+    throw new Error('Invalid announced skill packages')
+  }
 
-  const subscribed = fromManifests(manifests()).includes(match[1])
-  appendFileSync(process.env.GITHUB_OUTPUT, `subscribed=${subscribed}\npackage-slug=${match[1]}\n`)
+  const declared = fromManifests(manifests()).map((slug) => `@atls/skill-${slug}`)
+  const subscribed = announced.some((name) => declared.includes(name))
+  appendFileSync(process.env.GITHUB_OUTPUT, `subscribed=${subscribed}\n`)
   if (!subscribed) return
 
   const packageToken = process.env.SKILL_DELIVERY_PACKAGE_TOKEN
   if (!packageToken) throw new Error('Package read token is required')
-  execFileSync('yarn', ['up', '-R', name, '--mode=update-lockfile'], {
+  execFileSync('yarn', ['up', '-R', ...declared, '--mode=update-lockfile'], {
     cwd: process.env.GITHUB_WORKSPACE,
     env: {
       ...process.env,
@@ -104,7 +106,7 @@ const publishedPackages = async (pullNumber) => {
     if (!version || Date.parse(version.created_at) < Date.parse(pull.merged_at)) {
       throw new Error(`${manifest.name}@${manifest.version} was not published by this merge`)
     }
-    packages.push({ name: manifest.name, version: manifest.version, slug })
+    packages.push({ name: manifest.name, slug })
   }
 
   return packages
@@ -122,14 +124,13 @@ const notify = async () => {
   for (const target of repositories) {
     const value = target.properties.find(({ property_name }) => property_name === propertyName)?.value
     const subscriptions = parse(value)
-    for (const { name, version, slug } of packages) {
-      if (!subscriptions.includes(slug)) continue
-      await request('POST', `/repos/${target.repository_full_name}/dispatches`, {
-        event_type: 'skill-package-updated',
-        client_payload: { package: name, version },
-      })
-      dispatched += 1
-    }
+    const names = packages.filter(({ slug }) => subscriptions.includes(slug)).map(({ name }) => name)
+    if (names.length === 0) continue
+    await request('POST', `/repos/${target.repository_full_name}/dispatches`, {
+      event_type: 'skill-package-updated',
+      client_payload: { packages: names },
+    })
+    dispatched += 1
   }
 
   console.log(`Dispatched ${dispatched} skill package update(s)`)
