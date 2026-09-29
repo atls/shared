@@ -86,9 +86,24 @@ jobs:
 
       - name: Capture release workspaces
         run: |
-          release_workspaces_file="$RUNNER_TEMP/release-workspaces.txt"
-          : > "$release_workspaces_file"
-          yarn workspaces changed foreach -v --no-private --exclude . exec "node -p \"require('./package.json').name\" >> \"$release_workspaces_file\""
+          yarn workspaces changed list --json > "$RUNNER_TEMP/changed-workspaces.jsonl"
+          node <<'NODE'
+          const { readFileSync, writeFileSync } = require('node:fs')
+          const { execFileSync } = require('node:child_process')
+          const { join } = require('node:path')
+          const candidates = readFileSync(join(process.env.RUNNER_TEMP, 'changed-workspaces.jsonl'), 'utf8')
+            .split('\n').filter(Boolean).map(JSON.parse)
+            .filter((workspace) => workspace.name && workspace.location !== '.')
+          const releases = []
+          for (const workspace of candidates) {
+            const manifestPath = join(workspace.location, 'package.json')
+            const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+            if (manifest.private) continue
+            const committed = JSON.parse(execFileSync('git', ['show', `HEAD:${manifestPath}`], { encoding: 'utf8' }))
+            if (manifest.version !== committed.version) releases.push(manifest.name)
+          }
+          writeFileSync(join(process.env.RUNNER_TEMP, 'release-workspaces.txt'), releases.join('\n') + (releases.length ? '\n' : ''))
+          NODE
 
       - name: Compose commit message
         id: commit_message
