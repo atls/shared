@@ -84,6 +84,12 @@ jobs:
         run: |
           git diff
 
+      - name: Capture release workspaces
+        run: |
+          release_workspaces_file="$RUNNER_TEMP/release-workspaces.txt"
+          : > "$release_workspaces_file"
+          yarn workspaces changed foreach -v --no-private --exclude . exec "node -p \"require('./package.json').name\" >> \"$release_workspaces_file\""
+
       - name: Compose commit message
         id: commit_message
         run: |
@@ -126,9 +132,12 @@ jobs:
 
       - name: Npm Publish
         if: ${{ success() && steps.version-commit.outputs.commit-hash != '' }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . npm publish --tolerate-republish --access "$PACKAGE_ACCESS"
+        run: |
+          set -euo pipefail
+          while IFS= read -r release_workspace; do
+            yarn workspace "$release_workspace" npm publish --tolerate-republish --access "$PACKAGE_ACCESS"
+          done < "$RUNNER_TEMP/release-workspaces.txt"
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           PACKAGE_ACCESS: ${{ inputs.packageAccess }}
           YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
           YARN_NPM_REGISTRY_SERVER: ${{ inputs.registryServer }}
@@ -136,7 +145,11 @@ jobs:
 
       - name: Release
         if: ${{ success() && steps.version-commit.outputs.commit-hash != '' }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . release create
+        run: |
+          set -euo pipefail
+          while IFS= read -r release_workspace; do
+            yarn workspace "$release_workspace" release create
+          done < "$RUNNER_TEMP/release-workspaces.txt"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
