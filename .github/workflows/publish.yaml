@@ -130,6 +130,30 @@ jobs:
         if: ${{ success() && steps.version-commit.outputs.commit-hash != '' }}
         run: yarn install --immutable
 
+      - name: Validate release tags
+        if: ${{ success() && steps.version-commit.outputs.commit-hash != '' }}
+        run: &release-tags |
+          set -euo pipefail
+          while IFS= read -r release_workspace; do
+            release_tag=$(yarn workspace "$release_workspace" exec node -p "require('./package.json').name + '@' + require('./package.json').version")
+            git check-ref-format "refs/tags/$release_tag"
+            remote_tag_refs=$(git ls-remote origin "refs/tags/$release_tag" "refs/tags/$release_tag^{}")
+            if [ -z "$remote_tag_refs" ] && [ "$CREATE_RELEASES" = 'true' ]; then
+              git push origin "$RELEASE_COMMIT:refs/tags/$release_tag"
+              remote_tag_refs=$(git ls-remote origin "refs/tags/$release_tag" "refs/tags/$release_tag^{}")
+            fi
+            if [ -n "$remote_tag_refs" ]; then
+              remote_tag_commit=$(awk '$2 ~ /\^\{\}$/ { peeled = $1 } $2 !~ /\^\{\}$/ { direct = $1 } END { print peeled ? peeled : direct }' <<< "$remote_tag_refs")
+              test "$remote_tag_commit" = "$RELEASE_COMMIT"
+            fi
+            if [ "$CREATE_RELEASES" = 'true' ]; then
+              yarn workspace "$release_workspace" release create
+            fi
+          done < "$RUNNER_TEMP/release-workspaces.txt"
+        env:
+          CREATE_RELEASES: 'false'
+          RELEASE_COMMIT: ${{ steps.version-commit.outputs.commit-hash }}
+
       - name: Npm Publish
         if: ${{ success() && steps.version-commit.outputs.commit-hash != '' }}
         run: |
@@ -145,22 +169,10 @@ jobs:
 
       - name: Release
         if: ${{ success() && steps.version-commit.outputs.commit-hash != '' }}
-        run: |
-          set -euo pipefail
-          while IFS= read -r release_workspace; do
-            release_tag=$(yarn workspace "$release_workspace" exec node -p "require('./package.json').name + '@' + require('./package.json').version")
-            git check-ref-format "refs/tags/$release_tag"
-            remote_tag_refs=$(git ls-remote origin "refs/tags/$release_tag" "refs/tags/$release_tag^{}")
-            if [ -z "$remote_tag_refs" ]; then
-              git push origin "$RELEASE_COMMIT:refs/tags/$release_tag"
-              remote_tag_refs=$(git ls-remote origin "refs/tags/$release_tag" "refs/tags/$release_tag^{}")
-            fi
-            remote_tag_commit=$(awk '$2 ~ /\^\{\}$/ { peeled = $1 } $2 !~ /\^\{\}$/ { direct = $1 } END { print peeled ? peeled : direct }' <<< "$remote_tag_refs")
-            test "$remote_tag_commit" = "$RELEASE_COMMIT"
-            yarn workspace "$release_workspace" release create
-          done < "$RUNNER_TEMP/release-workspaces.txt"
+        run: *release-tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CREATE_RELEASES: 'true'
           RELEASE_COMMIT: ${{ steps.version-commit.outputs.commit-hash }}
 
       - name: Commit release metadata
