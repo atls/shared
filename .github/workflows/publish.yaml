@@ -54,7 +54,7 @@ jobs:
 
       - name: Yarn cache directory
         id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache@v6
         id: yarn-cache
@@ -84,55 +84,24 @@ jobs:
         run: |
           git diff
 
-      - name: Changelog
-        if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . changelog generate
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Debug git diff
-        run: |
-          git diff
-
-      - name: Release
-        if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . release create
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Npm Publish
-        if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . npm publish --tolerate-republish --access "$PACKAGE_ACCESS"
-        env:
-          PACKAGE_ACCESS: ${{ inputs.packageAccess }}
-          YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
-          YARN_NPM_REGISTRY_SERVER: ${{ inputs.registryServer }}
-          YARN_NPM_PUBLISH_REGISTRY: ${{ inputs.registryServer }}
-
       - name: Compose commit message
-        if: ${{ !cancelled() }}
         id: commit_message
         run: |
           INITIAL_MESSAGE=$'chore(common): versions\n\n'
           temp_file=$(mktemp)
-          yarn workspaces changed foreach -v --exclude . exec "echo \"\$npm_package_name:\$npm_package_version \" >> $temp_file"
-          MESSAGE=$(cat $temp_file)
-          echo $(cat $temp_file)
+          yarn workspaces changed foreach -v --exclude . exec "echo \"\$npm_package_name:\$npm_package_version \" >> \"$temp_file\""
+          MESSAGE=$(cat "$temp_file")
+          cat "$temp_file"
           INITIAL_MESSAGE+=$MESSAGE
           INITIAL_MESSAGE="${INITIAL_MESSAGE//'%'/' '}"
           INITIAL_MESSAGE="${INITIAL_MESSAGE//$'\n'/' '}"
           INITIAL_MESSAGE="${INITIAL_MESSAGE//$'\r'/' '}"
-          echo "commitMessage=$INITIAL_MESSAGE" >> $GITHUB_OUTPUT
-          echo $INITIAL_MESSAGE
-          rm $temp_file
-
-      - name: Stage all changelog files
-        if: ${{ !cancelled() }}
-        run: |
-          git add '*.md'
+          echo "commitMessage=$INITIAL_MESSAGE" >> "$GITHUB_OUTPUT"
+          echo "$INITIAL_MESSAGE"
+          rm "$temp_file"
 
       - name: Commit changes
-        if: ${{ !cancelled() }}
+        id: version-commit
         uses: planetscale/ghcommit-action@v0.2.20
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -140,4 +109,44 @@ jobs:
           repo: ${{ github.repository }}
           branch: master
           commit_message: ${{ steps.commit_message.outputs.commitMessage }}
+          file_pattern: '*.json *.md *.yaml *.yml *.lock'
+
+      - name: Checkout versioned release commit
+        if: ${{ success() && steps.version-commit.outputs.commit-hash != '' }}
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.version-commit.outputs.commit-hash }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+          clean: false
+
+      - name: Install versioned release
+        if: ${{ success() && steps.version-commit.outputs.commit-hash != '' }}
+        run: yarn install --immutable
+
+      - name: Npm Publish
+        if: ${{ success() && steps.version-commit.outputs.commit-hash != '' }}
+        run: yarn workspaces changed foreach -v --no-private --exclude . npm publish --tolerate-republish --access "$PACKAGE_ACCESS"
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          PACKAGE_ACCESS: ${{ inputs.packageAccess }}
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
+          YARN_NPM_REGISTRY_SERVER: ${{ inputs.registryServer }}
+          YARN_NPM_PUBLISH_REGISTRY: ${{ inputs.registryServer }}
+
+      - name: Release
+        if: ${{ success() && steps.version-commit.outputs.commit-hash != '' }}
+        run: yarn workspaces changed foreach -v --no-private --exclude . release create
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit release metadata
+        if: ${{ success() && steps.version-commit.outputs.commit-hash != '' }}
+        uses: planetscale/ghcommit-action@v0.2.20
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        with:
+          repo: ${{ github.repository }}
+          branch: master
+          commit_message: 'chore(common): release metadata'
           file_pattern: '*.json *.md *.yaml *.yml *.lock'
