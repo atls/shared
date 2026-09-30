@@ -8,19 +8,29 @@ on:
         default: '24'
         required: false
         type: string
+      node-version-file:
+        description: 'Project file declaring Node version; overrides node-version'
+        default: ''
+        required: false
+        type: string
+      base-ref:
+        description: 'Git comparison revision exposed as RAIJIN_BASE_REF'
+        default: ''
+        required: false
+        type: string
       installPlaywright:
         description: 'Install Playwright browsers before checks'
         default: false
         required: false
         type: boolean
       playwright-version:
-        description: 'Playwright version to install. Default: 1.55.0'
-        default: '1.55.0'
+        description: 'Playwright version to install. Default: 1.63.0'
+        default: '1.63.0'
         required: false
         type: string
       checksCommand:
-        description: 'Command to run project checks. Default: yarn checks run'
-        default: 'yarn checks run'
+        description: 'Command to run project checks. Default: yarn check --verify'
+        default: 'yarn check --verify'
         required: false
         type: string
 
@@ -37,11 +47,14 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ inputs.node-version-file == '' && inputs.node-version || '' }}
+          node-version-file: ${{ inputs.node-version-file }}
 
       - name: Yarn cache directory
         id: yarn-cache-dir-path
@@ -68,3 +81,4 @@ jobs:
         run: ${{ inputs.checksCommand }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RAIJIN_BASE_REF: ${{ inputs.base-ref }}
