@@ -13,6 +13,12 @@ Yarn runtime. The optional
 `dryRun` input passes the native `--dry-run` flag; it does not replace
 semantic-release authentication checks or execute its prepare/publish stages.
 
+Registry credentials are checked before version changes and release tagging.
+The npm latest promotion runs after publication and requires the exact version
+in every enabled registry, a non-draft GitHub release and the configured asset.
+To retry only this final step after a failure, set `promotionVersion` to the
+already published version. This does not create another version or release tag.
+
 The existing `publish.yaml` interface is unchanged. Migration of its other
 callers is not part of the Raijin integration.
 

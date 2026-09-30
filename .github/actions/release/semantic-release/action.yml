@@ -29,6 +29,10 @@ inputs:
     description: Calculate the release without publishing
     required: false
     default: 'false'
+  promotionVersion:
+    description: Retry latest promotion for an already published version
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -40,6 +44,8 @@ runs:
       run: npm ci --prefix "$RELEASE_TOOLS_PATH" --registry=https://registry.npmjs.org --ignore-scripts --no-audit --no-fund
 
     - name: Release package
+      id: release
+      if: ${{ inputs.promotionVersion == '' }}
       shell: bash
       env:
         RELEASE_CONFIG_PATH: ${{ github.action_path }}/release.config.js
@@ -57,3 +63,15 @@ runs:
           release_args+=(--dry-run)
         fi
         node "$RELEASE_TOOLS_PATH/node_modules/semantic-release/bin/semantic-release.js" "${release_args[@]}"
+
+    - name: Promote published npm version
+      if: ${{ inputs.dryRun != 'true' && (inputs.promotionVersion != '' || steps.release.outputs.version != '') }}
+      shell: bash
+      env:
+        RELEASE_TOOLS_PATH: ${{ github.action_path }}
+        RELEASE_PACKAGE: ${{ inputs.packageName }}
+        RELEASE_VERSION: ${{ inputs.promotionVersion || steps.release.outputs.version }}
+        RELEASE_GITHUB_PACKAGES: ${{ inputs.githubPackages }}
+        RELEASE_ASSET_PATH: ${{ inputs.assetPath }}
+        RELEASE_ASSET_NAME: ${{ inputs.assetName }}
+      run: bash "$RELEASE_TOOLS_PATH/promote-version.sh"

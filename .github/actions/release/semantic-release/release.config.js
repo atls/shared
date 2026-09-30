@@ -36,10 +36,9 @@ export default {
       {
         verifyConditionsCmd:
           `bash "${fileURLToPath(new URL('./verify-credentials.sh', import.meta.url))}"`,
+        verifyReleaseCmd: 'echo "version=${nextRelease.version}" >> "$GITHUB_OUTPUT"',
         prepareCmd: prepareCommands.join(' && '),
         publishCmd: publishCommands.join(' && '),
-        successCmd:
-          'YARN_NPM_AUTH_TOKEN="$NPM_TOKEN" YARN_NPM_REGISTRY_SERVER=https://registry.npmjs.org yarn npm tag add "$RELEASE_PACKAGE@${nextRelease.version}" latest',
       },
     ],
     [
