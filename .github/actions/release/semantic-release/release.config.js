@@ -1,5 +1,4 @@
 import { createRequire } from 'node:module'
-import { fileURLToPath } from 'node:url'
 const conventionalCommitsConfigPath = createRequire(import.meta.url).resolve(
   'conventional-changelog-conventionalcommits'
 )
@@ -9,13 +8,18 @@ const prepareCommands = [
   process.env.RELEASE_PREPARE_COMMAND,
 ].filter(Boolean)
 
+const verifyCommands = [
+  'YARN_NPM_AUTH_TOKEN="$NPM_TOKEN" YARN_NPM_REGISTRY_SERVER=https://registry.npmjs.org YARN_NPM_PUBLISH_REGISTRY=https://registry.npmjs.org yarn npm whoami --publish > /dev/null',
+]
+
 const publishCommands = [
-  'YARN_NPM_AUTH_TOKEN="$NPM_TOKEN" YARN_NPM_REGISTRY_SERVER=https://registry.npmjs.org YARN_NPM_PUBLISH_REGISTRY=https://registry.npmjs.org yarn workspace "$RELEASE_PACKAGE" npm publish --access "$RELEASE_ACCESS" --tag candidate',
+  'YARN_NPM_AUTH_TOKEN="$NPM_TOKEN" YARN_NPM_REGISTRY_SERVER=https://registry.npmjs.org YARN_NPM_PUBLISH_REGISTRY=https://registry.npmjs.org yarn workspace "$RELEASE_PACKAGE" npm publish --access "$RELEASE_ACCESS" --tag latest',
 ]
 
 if (process.env.RELEASE_GITHUB_PACKAGES === 'true') {
+  verifyCommands.push('test -n "$GITHUB_PACKAGES_TOKEN"')
   publishCommands.push(
-    'YARN_NPM_AUTH_TOKEN="$GITHUB_PACKAGES_TOKEN" YARN_NPM_REGISTRY_SERVER=https://npm.pkg.github.com YARN_NPM_PUBLISH_REGISTRY=https://npm.pkg.github.com yarn workspace "$RELEASE_PACKAGE" npm publish --access "$RELEASE_ACCESS"'
+    'YARN_NPM_AUTH_TOKEN="$GITHUB_PACKAGES_TOKEN" YARN_NPM_REGISTRY_SERVER=https://npm.pkg.github.com YARN_NPM_PUBLISH_REGISTRY=https://npm.pkg.github.com yarn workspace "$RELEASE_PACKAGE" npm publish --access "$RELEASE_ACCESS" --tag latest'
   )
 }
 
@@ -34,9 +38,7 @@ export default {
     [
       '@semantic-release/exec',
       {
-        verifyConditionsCmd:
-          `bash "${fileURLToPath(new URL('./verify-credentials.sh', import.meta.url))}"`,
-        verifyReleaseCmd: 'echo "version=${nextRelease.version}" >> "$GITHUB_OUTPUT"',
+        verifyConditionsCmd: verifyCommands.join(' && '),
         prepareCmd: prepareCommands.join(' && '),
         publishCmd: publishCommands.join(' && '),
       },
