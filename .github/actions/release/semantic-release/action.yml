@@ -1,0 +1,59 @@
+name: Semantic package release
+description: Release a public Yarn workspace with the shared semantic-release policy
+
+inputs:
+  packageName:
+    description: Public workspace package name
+    required: true
+  prepareCommand:
+    description: Project build command after applying the release version
+    required: false
+    default: ''
+  packageAccess:
+    description: npm package access
+    required: false
+    default: public
+  githubPackages:
+    description: Also publish to GitHub Packages
+    required: false
+    default: 'false'
+  assetPath:
+    description: Optional GitHub release asset
+    required: false
+    default: ''
+  assetName:
+    description: Optional uploaded asset name
+    required: false
+    default: ''
+  dryRun:
+    description: Calculate the release without publishing
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Install shared release tools
+      shell: bash
+      env:
+        RELEASE_TOOLS_PATH: ${{ github.action_path }}
+      run: npm ci --prefix "$RELEASE_TOOLS_PATH" --registry=https://registry.npmjs.org --ignore-scripts --no-audit --no-fund
+
+    - name: Release package
+      shell: bash
+      env:
+        RELEASE_CONFIG_PATH: ${{ github.action_path }}/release.config.mjs
+        RELEASE_TOOLS_PATH: ${{ github.action_path }}
+        RELEASE_PACKAGE: ${{ inputs.packageName }}
+        RELEASE_PREPARE_COMMAND: ${{ inputs.prepareCommand }}
+        RELEASE_ACCESS: ${{ inputs.packageAccess }}
+        RELEASE_GITHUB_PACKAGES: ${{ inputs.githubPackages }}
+        RELEASE_ASSET_PATH: ${{ inputs.assetPath }}
+        RELEASE_ASSET_NAME: ${{ inputs.assetName }}
+        RELEASE_DRY_RUN: ${{ inputs.dryRun }}
+      run: |
+        release_args=(--extends "$RELEASE_CONFIG_PATH")
+        if [[ "$RELEASE_DRY_RUN" == true ]]; then
+          release_args+=(--dry-run)
+        fi
+        node "$RELEASE_TOOLS_PATH/node_modules/semantic-release/bin/semantic-release.js" "${release_args[@]}"
