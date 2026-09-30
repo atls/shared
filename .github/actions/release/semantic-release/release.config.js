@@ -6,20 +6,21 @@ const conventionalCommitsConfigPath = createRequire(import.meta.url).resolve(
 const prepareCommands = [
   'yarn workspace "$RELEASE_PACKAGE" version ${nextRelease.version} --immediate',
   process.env.RELEASE_PREPARE_COMMAND,
+  'yarn workspace "$RELEASE_PACKAGE" pack --out "$RELEASE_TARBALL"',
 ].filter(Boolean)
 
 const verifyCommands = [
-  'YARN_NPM_AUTH_TOKEN="$NPM_TOKEN" YARN_NPM_REGISTRY_SERVER=https://registry.npmjs.org YARN_NPM_PUBLISH_REGISTRY=https://registry.npmjs.org yarn npm whoami --publish > /dev/null',
+  'node "$RELEASE_TOOLS_PATH/node_modules/npm/bin/npm-cli.js" whoami --registry=https://registry.npmjs.org --userconfig="$RELEASE_TOOLS_PATH/.npmrc" --prefix="$RELEASE_TOOLS_PATH" > /dev/null',
 ]
 
 const publishCommands = [
-  'YARN_NPM_AUTH_TOKEN="$NPM_TOKEN" YARN_NPM_REGISTRY_SERVER=https://registry.npmjs.org YARN_NPM_PUBLISH_REGISTRY=https://registry.npmjs.org yarn workspace "$RELEASE_PACKAGE" npm publish --access "$RELEASE_ACCESS" --tag latest',
+  'node "$RELEASE_TOOLS_PATH/node_modules/npm/bin/npm-cli.js" publish "$RELEASE_TARBALL" --registry=https://registry.npmjs.org --userconfig="$RELEASE_TOOLS_PATH/.npmrc" --prefix="$RELEASE_TOOLS_PATH" --access "$RELEASE_ACCESS" --tag latest',
 ]
 
 if (process.env.RELEASE_GITHUB_PACKAGES === 'true') {
   verifyCommands.push('test -n "$GITHUB_PACKAGES_TOKEN"')
   publishCommands.push(
-    'YARN_NPM_AUTH_TOKEN="$GITHUB_PACKAGES_TOKEN" YARN_NPM_REGISTRY_SERVER=https://npm.pkg.github.com YARN_NPM_PUBLISH_REGISTRY=https://npm.pkg.github.com yarn workspace "$RELEASE_PACKAGE" npm publish --access "$RELEASE_ACCESS" --tag latest'
+    'node "$RELEASE_TOOLS_PATH/node_modules/npm/bin/npm-cli.js" publish "$RELEASE_TARBALL" --registry=https://npm.pkg.github.com --userconfig="$RELEASE_TOOLS_PATH/.npmrc" --prefix="$RELEASE_TOOLS_PATH" --access "$RELEASE_ACCESS" --tag latest'
   )
 }
 
