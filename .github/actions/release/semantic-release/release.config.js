@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module'
+import { fileURLToPath } from 'node:url'
 const conventionalCommitsConfigPath = createRequire(import.meta.url).resolve(
   'conventional-changelog-conventionalcommits'
 )
@@ -33,6 +34,8 @@ export default {
     [
       '@semantic-release/exec',
       {
+        verifyConditionsCmd:
+          `bash "${fileURLToPath(new URL('./verify-credentials.sh', import.meta.url))}"`,
         prepareCmd: prepareCommands.join(' && '),
         publishCmd: publishCommands.join(' && '),
         successCmd:
