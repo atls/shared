@@ -3,15 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=24.10.0"
-  },
   "dependencies": {
     "@semantic-release/commit-analyzer": "13.0.1",
     "@semantic-release/exec": "7.1.0",
     "@semantic-release/github": "12.0.9",
     "@semantic-release/release-notes-generator": "14.1.1",
     "conventional-changelog-conventionalcommits": "9.3.1",
+    "npm": "11.20.0",
     "semantic-release": "25.0.9"
+  },
+  "engines": {
+    "node": ">=24.10.0"
   }
 }
