@@ -42,7 +42,7 @@ runs:
     - name: Release package
       shell: bash
       env:
-        RELEASE_CONFIG_PATH: ${{ github.action_path }}/release.config.mjs
+        RELEASE_CONFIG_PATH: ${{ github.action_path }}/release.config.js
         RELEASE_TOOLS_PATH: ${{ github.action_path }}
         RELEASE_PACKAGE: ${{ inputs.packageName }}
         RELEASE_PREPARE_COMMAND: ${{ inputs.prepareCommand }}
