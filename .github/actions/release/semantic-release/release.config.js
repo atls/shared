@@ -6,6 +6,7 @@ const conventionalCommitsConfigPath = createRequire(import.meta.url).resolve(
 const prepareCommands = [
   'yarn workspace "$RELEASE_PACKAGE" version <%= nextRelease.version %> --immediate',
   process.env.RELEASE_PREPARE_COMMAND,
+  'yarn workspace "$RELEASE_PACKAGE" exec npm pkg set "gitHead=<%= nextRelease.gitHead %>"',
   'yarn workspace "$RELEASE_PACKAGE" pack --out "$RELEASE_TARBALL"',
 ].filter(Boolean)
 
