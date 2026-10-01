@@ -35,17 +35,17 @@ runs:
   steps:
     - name: Install shared release tools
       shell: bash
+      working-directory: ${{ github.action_path }}/../../../..
       env:
-        SHARED_ROOT: ${{ github.action_path }}/../../../..
         YARN_NPM_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
-      run: yarn --cwd "$SHARED_ROOT" install --immutable --inline-builds
+      run: yarn install --immutable --inline-builds
 
     - name: Release package
       shell: bash
+      working-directory: ${{ github.action_path }}/../../../..
       env:
         RELEASE_CONFIG_PATH: ${{ github.action_path }}/release.config.js
         RELEASE_TOOLS_PATH: ${{ github.action_path }}
-        SHARED_ROOT: ${{ github.action_path }}/../../../..
         RELEASE_PACKAGE: ${{ inputs.packageName }}
         RELEASE_TARBALL: ${{ runner.temp }}/shared-semantic-release-package.tgz
         RELEASE_PREPARE_COMMAND: ${{ inputs.prepareCommand }}
@@ -59,4 +59,4 @@ runs:
         if [[ "$RELEASE_DRY_RUN" == true ]]; then
           release_args+=(--dry-run)
         fi
-        yarn --cwd "$SHARED_ROOT" workspace @atls/shared-semantic-release exec sh -c 'cd "$GITHUB_WORKSPACE" && semantic-release "$@"' shared-release "${release_args[@]}"
+        yarn workspace @atls/shared-semantic-release exec sh -c 'cd "$GITHUB_WORKSPACE" && semantic-release "$@"' shared-release "${release_args[@]}"
