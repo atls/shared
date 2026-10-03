@@ -15,6 +15,10 @@ const RAW_RUNTIME_STATE =
       "reference": "workspace:."\
     },\
     {\
+      "name": "@atls/shared-deferred-release",\
+      "reference": "workspace:.github/actions/release/deferred"\
+    },\
+    {\
       "name": "@atls/shared-semantic-release",\
       "reference": "workspace:.github/actions/release/semantic-release"\
     },\
@@ -30,6 +34,7 @@ const RAW_RUNTIME_STATE =
   "enableTopLevelFallback": true,\
   "ignorePatternData": "(^(?:\\\\.yarn\\\\/sdks(?:\\\\/(?!\\\\.{1,2}(?:\\\\/|$))(?:(?:(?!(?:^|\\\\/)\\\\.{1,2}(?:\\\\/|$)).)*?)|$))$)",\
   "fallbackExclusionList": [\
+    ["@atls/shared-deferred-release", ["workspace:.github/actions/release/deferred"]],\
     ["@atls/shared-semantic-release", ["workspace:.github/actions/release/semantic-release"]],\
     ["@scripts/clean-directory", ["workspace:scripts/clean-directory"]],\
     ["@scripts/repo-replacement", ["workspace:scripts/repo-replacement"]],\
@@ -189,6 +194,17 @@ const RAW_RUNTIME_STATE =
           ["@atls/config-typescript", "npm:2.0.1"]\
         ],\
         "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@atls/shared-deferred-release", [\
+      ["workspace:.github/actions/release/deferred", {\
+        "packageLocation": "./.github/actions/release/deferred/",\
+        "packageDependencies": [\
+          ["@atls/shared-deferred-release", "workspace:.github/actions/release/deferred"],\
+          ["conventional-changelog", "npm:8.1.3"],\
+          ["conventional-changelog-conventionalcommits", "npm:10.4.0"]\
+        ],\
+        "linkType": "SOFT"\
       }]\
     ]],\
     ["@atls/shared-semantic-release", [\
@@ -1262,6 +1278,44 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "../.yarn/berry/cache/@colors-colors-npm-1.5.0-875af3a8b4-10.zip/node_modules/@colors/colors/",\
         "packageDependencies": [\
           ["@colors/colors", "npm:1.5.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@conventional-changelog/git-client", [\
+      ["npm:3.1.2", {\
+        "packageLocation": "../.yarn/berry/cache/@conventional-changelog-git-client-npm-3.1.2-66547651cc-10.zip/node_modules/@conventional-changelog/git-client/",\
+        "packageDependencies": [\
+          ["@conventional-changelog/git-client", "npm:3.1.2"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:6da452f6a666e4e58ccc9b133d4bb20afd614085eb0aadfe9899c64f45ed6f5ff829d99f59fe20edc235edc8ad00ed75398766973574e00d546ef1ecb00a87af#npm:3.1.2", {\
+        "packageLocation": "./.yarn/__virtual__/@conventional-changelog-git-client-virtual-52bdee647b/2/.yarn/berry/cache/@conventional-changelog-git-client-npm-3.1.2-66547651cc-10.zip/node_modules/@conventional-changelog/git-client/",\
+        "packageDependencies": [\
+          ["@conventional-changelog/git-client", "virtual:6da452f6a666e4e58ccc9b133d4bb20afd614085eb0aadfe9899c64f45ed6f5ff829d99f59fe20edc235edc8ad00ed75398766973574e00d546ef1ecb00a87af#npm:3.1.2"],\
+          ["@simple-libs/child-process-utils", "npm:2.0.0"],\
+          ["@simple-libs/stream-utils", "npm:2.0.0"],\
+          ["@types/conventional-commits-filter", null],\
+          ["@types/conventional-commits-parser", null],\
+          ["conventional-commits-filter", "npm:6.0.1"],\
+          ["conventional-commits-parser", "npm:7.1.2"],\
+          ["semver", "npm:7.8.5"]\
+        ],\
+        "packagePeers": [\
+          "@types/conventional-commits-filter",\
+          "@types/conventional-commits-parser",\
+          "conventional-commits-filter",\
+          "conventional-commits-parser"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@conventional-changelog/template", [\
+      ["npm:1.4.0", {\
+        "packageLocation": "../.yarn/berry/cache/@conventional-changelog-template-npm-1.4.0-5aa546c980-10.zip/node_modules/@conventional-changelog/template/",\
+        "packageDependencies": [\
+          ["@conventional-changelog/template", "npm:1.4.0"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -2696,11 +2750,48 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["@simple-libs/child-process-utils", [\
+      ["npm:2.0.0", {\
+        "packageLocation": "../.yarn/berry/cache/@simple-libs-child-process-utils-npm-2.0.0-893ea4d5c2-10.zip/node_modules/@simple-libs/child-process-utils/",\
+        "packageDependencies": [\
+          ["@simple-libs/child-process-utils", "npm:2.0.0"],\
+          ["@simple-libs/stream-utils", "npm:2.0.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@simple-libs/hosted-git-info", [\
+      ["npm:2.0.0", {\
+        "packageLocation": "../.yarn/berry/cache/@simple-libs-hosted-git-info-npm-2.0.0-17a9161c66-10.zip/node_modules/@simple-libs/hosted-git-info/",\
+        "packageDependencies": [\
+          ["@simple-libs/hosted-git-info", "npm:2.0.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@simple-libs/normalize-package-data", [\
+      ["npm:1.0.0", {\
+        "packageLocation": "../.yarn/berry/cache/@simple-libs-normalize-package-data-npm-1.0.0-5ce5f116a2-10.zip/node_modules/@simple-libs/normalize-package-data/",\
+        "packageDependencies": [\
+          ["@simple-libs/normalize-package-data", "npm:1.0.0"],\
+          ["@simple-libs/hosted-git-info", "npm:2.0.0"],\
+          ["semver", "npm:7.8.5"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["@simple-libs/stream-utils", [\
       ["npm:1.2.0", {\
         "packageLocation": "../.yarn/berry/cache/@simple-libs-stream-utils-npm-1.2.0-db53dc026f-10.zip/node_modules/@simple-libs/stream-utils/",\
         "packageDependencies": [\
           ["@simple-libs/stream-utils", "npm:1.2.0"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
+      ["npm:2.0.0", {\
+        "packageLocation": "../.yarn/berry/cache/@simple-libs-stream-utils-npm-2.0.0-af0e756ed1-10.zip/node_modules/@simple-libs/stream-utils/",\
+        "packageDependencies": [\
+          ["@simple-libs/stream-utils", "npm:2.0.0"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -4007,6 +4098,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["argue-cli", [\
+      ["npm:3.2.0", {\
+        "packageLocation": "../.yarn/berry/cache/argue-cli-npm-3.2.0-521f866f00-10.zip/node_modules/argue-cli/",\
+        "packageDependencies": [\
+          ["argue-cli", "npm:3.2.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["argv-formatter", [\
       ["npm:1.0.0", {\
         "packageLocation": "../.yarn/berry/cache/argv-formatter-npm-1.0.0-6601482fc9-10.zip/node_modules/argv-formatter/",\
@@ -4946,6 +5046,24 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["conventional-changelog", [\
+      ["npm:8.1.3", {\
+        "packageLocation": "../.yarn/berry/cache/conventional-changelog-npm-8.1.3-6da452f6a6-10.zip/node_modules/conventional-changelog/",\
+        "packageDependencies": [\
+          ["conventional-changelog", "npm:8.1.3"],\
+          ["@conventional-changelog/git-client", "virtual:6da452f6a666e4e58ccc9b133d4bb20afd614085eb0aadfe9899c64f45ed6f5ff829d99f59fe20edc235edc8ad00ed75398766973574e00d546ef1ecb00a87af#npm:3.1.2"],\
+          ["@simple-libs/hosted-git-info", "npm:2.0.0"],\
+          ["@simple-libs/normalize-package-data", "npm:1.0.0"],\
+          ["argue-cli", "npm:3.2.0"],\
+          ["conventional-changelog-preset-loader", "npm:6.0.1"],\
+          ["conventional-changelog-writer", "npm:9.2.1"],\
+          ["conventional-commits-filter", "npm:6.0.1"],\
+          ["conventional-commits-parser", "npm:7.1.2"],\
+          ["fd-package-json", "npm:2.0.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["conventional-changelog-angular", [\
       ["npm:8.3.1", {\
         "packageLocation": "../.yarn/berry/cache/conventional-changelog-angular-npm-8.3.1-2d145d095c-10.zip/node_modules/conventional-changelog-angular/",\
@@ -4957,11 +5075,28 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["conventional-changelog-conventionalcommits", [\
+      ["npm:10.4.0", {\
+        "packageLocation": "../.yarn/berry/cache/conventional-changelog-conventionalcommits-npm-10.4.0-d77d8f5cd1-10.zip/node_modules/conventional-changelog-conventionalcommits/",\
+        "packageDependencies": [\
+          ["conventional-changelog-conventionalcommits", "npm:10.4.0"],\
+          ["@conventional-changelog/template", "npm:1.4.0"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
       ["npm:9.3.1", {\
         "packageLocation": "../.yarn/berry/cache/conventional-changelog-conventionalcommits-npm-9.3.1-60d201b7bb-10.zip/node_modules/conventional-changelog-conventionalcommits/",\
         "packageDependencies": [\
           ["conventional-changelog-conventionalcommits", "npm:9.3.1"],\
           ["compare-func", "npm:2.0.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["conventional-changelog-preset-loader", [\
+      ["npm:6.0.1", {\
+        "packageLocation": "../.yarn/berry/cache/conventional-changelog-preset-loader-npm-6.0.1-5f8f6ac3c8-10.zip/node_modules/conventional-changelog-preset-loader/",\
+        "packageDependencies": [\
+          ["conventional-changelog-preset-loader", "npm:6.0.1"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -4978,6 +5113,18 @@ const RAW_RUNTIME_STATE =
           ["semver", "npm:7.8.5"]\
         ],\
         "linkType": "HARD"\
+      }],\
+      ["npm:9.2.1", {\
+        "packageLocation": "../.yarn/berry/cache/conventional-changelog-writer-npm-9.2.1-0fca7c13d3-10.zip/node_modules/conventional-changelog-writer/",\
+        "packageDependencies": [\
+          ["conventional-changelog-writer", "npm:9.2.1"],\
+          ["@conventional-changelog/template", "npm:1.4.0"],\
+          ["@simple-libs/stream-utils", "npm:2.0.0"],\
+          ["argue-cli", "npm:3.2.0"],\
+          ["conventional-commits-filter", "npm:6.0.1"],\
+          ["semver", "npm:7.8.5"]\
+        ],\
+        "linkType": "HARD"\
       }]\
     ]],\
     ["conventional-commits-filter", [\
@@ -4985,6 +5132,13 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "../.yarn/berry/cache/conventional-commits-filter-npm-5.0.0-32862a6db4-10.zip/node_modules/conventional-commits-filter/",\
         "packageDependencies": [\
           ["conventional-commits-filter", "npm:5.0.0"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
+      ["npm:6.0.1", {\
+        "packageLocation": "../.yarn/berry/cache/conventional-commits-filter-npm-6.0.1-0b557d1d70-10.zip/node_modules/conventional-commits-filter/",\
+        "packageDependencies": [\
+          ["conventional-commits-filter", "npm:6.0.1"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -4996,6 +5150,15 @@ const RAW_RUNTIME_STATE =
           ["conventional-commits-parser", "npm:6.4.0"],\
           ["@simple-libs/stream-utils", "npm:1.2.0"],\
           ["meow", "npm:13.2.0"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
+      ["npm:7.1.2", {\
+        "packageLocation": "../.yarn/berry/cache/conventional-commits-parser-npm-7.1.2-c0923c6ec7-10.zip/node_modules/conventional-commits-parser/",\
+        "packageDependencies": [\
+          ["conventional-commits-parser", "npm:7.1.2"],\
+          ["@simple-libs/stream-utils", "npm:2.0.0"],\
+          ["argue-cli", "npm:3.2.0"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -6596,6 +6759,16 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["fb-watchman", "npm:2.0.1"],\
           ["bser", "npm:2.1.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["fd-package-json", [\
+      ["npm:2.0.0", {\
+        "packageLocation": "../.yarn/berry/cache/fd-package-json-npm-2.0.0-33d49af282-10.zip/node_modules/fd-package-json/",\
+        "packageDependencies": [\
+          ["fd-package-json", "npm:2.0.0"],\
+          ["walk-up-path", "npm:4.0.0"]\
         ],\
         "linkType": "HARD"\
       }]\

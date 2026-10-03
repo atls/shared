@@ -1,0 +1,13 @@
+{
+  "name": "@atls/shared-deferred-release",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "conventional-changelog": "8.1.3",
+    "conventional-changelog-conventionalcommits": "10.4.0"
+  },
+  "engines": {
+    "node": ">=24.10.0"
+  }
+}
