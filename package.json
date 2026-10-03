@@ -5,7 +5,8 @@
   "type": "module",
   "workspaces": [
     "scripts/**/*",
-    ".github/actions/release/semantic-release"
+    ".github/actions/release/semantic-release",
+    ".github/actions/release/deferred"
   ],
   "devDependencies": {
     "@atls/code-runtime": "2.1.9",

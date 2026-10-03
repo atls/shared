@@ -1,0 +1,39 @@
+name: Deferred workspace release
+description: Release public Yarn workspaces selected by deferred version records
+
+inputs:
+  acceptedSha:
+    description: Exact accepted commit to release
+    required: true
+  registryServer:
+    description: npm registry URL
+    required: true
+  packageAccess:
+    description: npm package access
+    required: true
+  dryRun:
+    description: Plan without Git, npm, or GitHub mutations
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Install shared release tools
+      shell: bash
+      working-directory: ${{ github.action_path }}/../../../..
+      run: yarn install --immutable --inline-builds
+
+    - name: Release deferred workspaces
+      shell: bash
+      working-directory: ${{ github.action_path }}/../../../..
+      env:
+        ACCEPTED_SHA: ${{ inputs.acceptedSha }}
+        REGISTRY_SERVER: ${{ inputs.registryServer }}
+        PACKAGE_ACCESS: ${{ inputs.packageAccess }}
+        RELEASE_DRY_RUN: ${{ inputs.dryRun }}
+        RELEASE_REPOSITORY: ${{ github.repository }}
+        YARN_NPM_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
+        YARN_NPM_REGISTRY_SERVER: ${{ inputs.registryServer }}
+        YARN_NPM_PUBLISH_REGISTRY: ${{ inputs.registryServer }}
+      run: yarn workspace @atls/shared-deferred-release exec node release.mjs
