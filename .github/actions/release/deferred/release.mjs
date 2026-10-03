@@ -132,6 +132,21 @@ function remoteTagCommit(tag) {
   return selected.slice(0, 40)
 }
 
+function publishedMetadata(plan) {
+  let output
+  try {
+    output = run('yarn', ['npm', 'info', `${plan.name}@${plan.newVersion}`, '--json'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+  } catch (error) {
+    const diagnostic = `${error.stdout?.toString() || ''}\n${error.stderr?.toString() || ''}`
+    if (diagnostic.includes('YN0035') && /\b404\b/.test(diagnostic)) return undefined
+    throw error
+  }
+  const metadata = JSON.parse(output)
+  return metadata.version === plan.newVersion ? metadata : undefined
+}
+
 async function deferChangedWorkspaceVersions(releaseBaseSha) {
   const preset = await conventionalCommits()
   const previousMaster = run('git', ['rev-parse', `${releaseBaseSha}^`])
@@ -363,12 +378,24 @@ async function main() {
       tagCommit === undefined || tagCommit === releaseSha,
       `Existing tag points to a different commit: ${tag}`
     )
+    const existing = publishedMetadata(plan)
+    requireCondition(
+      !existing || existing.gitHead === releaseSha,
+      `Registry version belongs to a different commit: ${tag}`
+    )
   }
 
   const publishArgs = ['workspaces', 'foreach', '--all', '--no-private', '--topological']
   for (const plan of plans) publishArgs.push('--include', plan.name)
   publishArgs.push('npm', 'publish', '--tolerate-republish', '--access', process.env.PACKAGE_ACCESS)
   run('yarn', publishArgs, { stdio: 'inherit' })
+
+  for (const plan of plans) {
+    requireCondition(
+      publishedMetadata(plan)?.gitHead === releaseSha,
+      `Registry did not confirm the release commit for ${plan.name}@${plan.newVersion}`
+    )
+  }
 
   for (const plan of plans) {
     const tag = `${plan.name}@${plan.newVersion}`

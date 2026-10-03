@@ -1,5 +1,5 @@
 name: Workspace release
-description: Release public workspaces changed since their last tag through the accepted commit
+description: Release public workspaces changed since their last tag through a fixed master revision
 
 inputs:
   acceptedSha:
