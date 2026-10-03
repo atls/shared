@@ -152,6 +152,7 @@ async function deferChangedWorkspaceVersions() {
     .filter(Boolean)
     .map((line) => JSON.parse(line))
   const manifests = []
+  const targets = []
 
   for (const workspace of workspaces) {
     requireCondition(
@@ -171,10 +172,11 @@ async function deferChangedWorkspaceVersions() {
 
       if (releaseType) {
         run('yarn', ['workspace', workspace.name, 'version', releaseType, '--deferred'])
+        targets.push(workspace.name)
       }
     }
   }
-  return { range, manifests }
+  return { range, manifests, targets }
 }
 
 async function main() {
@@ -188,8 +190,10 @@ async function main() {
   )
   requireCondition(run('git', ['status', '--porcelain']) === '', 'Release checkout must be clean')
 
-  const { range: releaseRange, manifests } = await deferChangedWorkspaceVersions()
-  const preview = records(run('yarn', ['version', 'apply', '--all', '--dry-run', '--json']))
+  const { range: releaseRange, manifests, targets } = await deferChangedWorkspaceVersions()
+  const preview = targets.flatMap((name) =>
+    records(run('yarn', ['workspace', name, 'version', 'apply', '--dry-run', '--json']))
+  )
   const plans = []
   for (const record of preview) {
     if (record.oldVersion !== record.newVersion) {
@@ -254,7 +258,9 @@ async function main() {
   const currentRemote = remoteSha()
   let releaseSha
   if (currentRemote === acceptedSha) {
-    const applied = records(run('yarn', ['version', 'apply', '--all', '--json']))
+    const applied = targets.flatMap((name) =>
+      records(run('yarn', ['workspace', name, 'version', 'apply', '--json']))
+    )
     requireCondition(
       JSON.stringify(revisionMap(applied)) === JSON.stringify(revisionMap(preview)),
       'Applied Yarn versions differ from the plan'
