@@ -4,7 +4,9 @@ import { existsSync, realpathSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { relative, resolve, sep } from 'node:path'
 import { ConventionalChangelog } from 'conventional-changelog'
-import conventionalCommits from 'conventional-changelog-conventionalcommits'
+import conventionalCommits, {
+  DEFAULT_COMMIT_TYPES,
+} from 'conventional-changelog-conventionalcommits'
 import { Bumper } from 'conventional-recommended-bump'
 
 const root = process.env.GITHUB_WORKSPACE && realpathSync(process.env.GITHUB_WORKSPACE)
@@ -215,7 +217,11 @@ async function main() {
     return
   }
 
-  const preset = await conventionalCommits()
+  const preset = await conventionalCommits({
+    types: DEFAULT_COMMIT_TYPES.map((type) =>
+      type.effect === 'hidden' ? { ...type, effect: 'changelog' } : type
+    ),
+  })
   const releaseDate = run('git', ['show', '-s', '--format=%cs', acceptedSha])
   requireCondition(/^\d{4}-\d{2}-\d{2}$/.test(releaseDate), 'Invalid accepted commit date')
   for (const plan of plans) plan.notes = await releaseNotes(plan, preset, releaseDate, releaseRange)
