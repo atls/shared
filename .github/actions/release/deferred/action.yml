@@ -1,9 +1,15 @@
-name: Deferred workspace release
-description: Release public Yarn workspaces selected by deferred version records
+name: Workspace release
+description: Select changed public workspaces from the accepted pull request and publish their Yarn versions
 
 inputs:
   acceptedSha:
     description: Exact accepted commit to release
+    required: true
+  pullNumber:
+    description: Accepted pull request number
+    required: true
+  pullHeadSha:
+    description: Accepted pull request head SHA
     required: true
   registryServer:
     description: npm registry URL
@@ -12,7 +18,7 @@ inputs:
     description: npm package access
     required: true
   dryRun:
-    description: Plan without Git, npm, or GitHub mutations
+    description: Preview without remote Git, npm, or GitHub writes
     required: false
     default: 'false'
 
@@ -29,6 +35,8 @@ runs:
       working-directory: ${{ github.action_path }}/../../../..
       env:
         ACCEPTED_SHA: ${{ inputs.acceptedSha }}
+        RELEASE_PULL_NUMBER: ${{ inputs.pullNumber }}
+        RELEASE_PULL_HEAD_SHA: ${{ inputs.pullHeadSha }}
         REGISTRY_SERVER: ${{ inputs.registryServer }}
         PACKAGE_ACCESS: ${{ inputs.packageAccess }}
         RELEASE_DRY_RUN: ${{ inputs.dryRun }}

@@ -202,7 +202,8 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["@atls/shared-deferred-release", "workspace:.github/actions/release/deferred"],\
           ["conventional-changelog", "npm:8.1.3"],\
-          ["conventional-changelog-conventionalcommits", "npm:10.4.0"]\
+          ["conventional-changelog-conventionalcommits", "npm:10.4.0"],\
+          ["conventional-recommended-bump", "npm:12.1.0"]\
         ],\
         "linkType": "SOFT"\
       }]\
@@ -5159,6 +5160,20 @@ const RAW_RUNTIME_STATE =
           ["conventional-commits-parser", "npm:7.1.2"],\
           ["@simple-libs/stream-utils", "npm:2.0.0"],\
           ["argue-cli", "npm:3.2.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["conventional-recommended-bump", [\
+      ["npm:12.1.0", {\
+        "packageLocation": "../.yarn/berry/cache/conventional-recommended-bump-npm-12.1.0-3b5773b5b4-10.zip/node_modules/conventional-recommended-bump/",\
+        "packageDependencies": [\
+          ["conventional-recommended-bump", "npm:12.1.0"],\
+          ["@conventional-changelog/git-client", "virtual:6da452f6a666e4e58ccc9b133d4bb20afd614085eb0aadfe9899c64f45ed6f5ff829d99f59fe20edc235edc8ad00ed75398766973574e00d546ef1ecb00a87af#npm:3.1.2"],\
+          ["argue-cli", "npm:3.2.0"],\
+          ["conventional-changelog-preset-loader", "npm:6.0.1"],\
+          ["conventional-commits-filter", "npm:6.0.1"],\
+          ["conventional-commits-parser", "npm:7.1.2"]\
         ],\
         "linkType": "HARD"\
       }]\
