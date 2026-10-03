@@ -62,12 +62,13 @@ function packagePath(cwd) {
   return path
 }
 
-async function releaseNotes(plan, preset) {
+async function releaseNotes(plan, preset, releaseDate) {
   const generator = new ConventionalChangelog(root)
     .config(preset)
     .package({ ...plan.manifest, version: plan.newVersion })
     .tags({ prefix: `${plan.name}@` })
     .commits({ path: plan.path })
+    .context({ date: releaseDate })
   if (process.env.RELEASE_REPOSITORY) {
     generator.repository(`https://github.com/${process.env.RELEASE_REPOSITORY}`)
   }
@@ -126,7 +127,9 @@ async function main() {
   }
 
   const preset = await conventionalCommits()
-  for (const plan of plans) plan.notes = await releaseNotes(plan, preset)
+  const releaseDate = run('git', ['show', '-s', '--format=%cs', acceptedSha])
+  requireCondition(/^\d{4}-\d{2}-\d{2}$/.test(releaseDate), 'Invalid accepted commit date')
+  for (const plan of plans) plan.notes = await releaseNotes(plan, preset, releaseDate)
   process.stdout.write(
     `${JSON.stringify(
       plans.map(({ name, oldVersion, newVersion, path }) => ({
