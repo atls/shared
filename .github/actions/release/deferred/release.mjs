@@ -68,12 +68,12 @@ function packagePath(cwd) {
   return path
 }
 
-async function releaseNotes(plan, preset, releaseDate, range) {
+async function releaseNotes(plan, preset, releaseDate, to) {
   const generator = new ConventionalChangelog(root)
     .config(preset)
     .package({ ...plan.manifest, version: plan.newVersion })
-    .tags({ prefix: `${plan.name}@`, to: range.from })
-    .commits({ ...range, path: plan.path || '.' })
+    .tags({ prefix: `${plan.name}@`, to })
+    .commits({ from: plan.fromTag || '', to, path: plan.path || '.' })
     .context({ date: releaseDate })
   if (process.env.RELEASE_REPOSITORY) {
     generator.repository(`https://github.com/${process.env.RELEASE_REPOSITORY}`)
@@ -113,9 +113,10 @@ function deliveredReleaseSha(currentRemote) {
   const candidates = descendants.filter(
     (sha) =>
       run('git', ['rev-parse', `${sha}^`]) === acceptedSha &&
-      run('git', ['show', '-s', '--format=%s', sha]) === commitSubject
+      run('git', ['show', '-s', '--format=%s', sha]) === commitSubject &&
+      run('git', ['show', '-s', '--format=%an', sha]) === 'atls-release[bot]'
   )
-  requireCondition(candidates.length === 1, 'Expected release commit was not found on master')
+  requireCondition(candidates.length <= 1, 'Multiple release commits follow the accepted commit')
   return candidates[0]
 }
 
@@ -131,28 +132,19 @@ function remoteTagCommit(tag) {
   return selected.slice(0, 40)
 }
 
-function acceptedPullRange() {
-  const number = process.env.RELEASE_PULL_NUMBER
-  const headSha = process.env.RELEASE_PULL_HEAD_SHA
-  requireCondition(/^\d+$/.test(number || ''), 'Pull request number is required')
-  requireCondition(/^[a-f0-9]{40}$/.test(headSha || ''), 'Pull request head SHA is required')
-  run('git', ['fetch', '--no-tags', 'origin', `refs/pull/${number}/head`], {
-    stdio: 'inherit',
-  })
-  requireCondition(run('git', ['rev-parse', 'FETCH_HEAD']) === headSha, 'Pull request head moved')
-  const previousMaster = run('git', ['rev-parse', `${acceptedSha}^`])
-  return { from: run('git', ['merge-base', previousMaster, headSha]), to: headSha }
-}
-
-async function deferChangedWorkspaceVersions() {
-  const range = acceptedPullRange()
+async function deferChangedWorkspaceVersions(releaseBaseSha) {
   const preset = await conventionalCommits()
+  const previousMaster = run('git', ['rev-parse', `${releaseBaseSha}^`])
+  const baselineTag = await new Bumper(root)
+    .tag({ prefix: /.*@/, to: releaseBaseSha })
+    .getLastSemverTag()
   const workspaces = run('yarn', ['workspaces', 'list', '--json'])
     .split('\n')
     .filter(Boolean)
     .map((line) => JSON.parse(line))
   const manifests = []
   const targets = []
+  const fromTags = new Map()
 
   for (const workspace of workspaces) {
     requireCondition(
@@ -163,20 +155,51 @@ async function deferChangedWorkspaceVersions() {
     manifests.push(relative(root, resolve(cwd, 'package.json')))
     const manifest = JSON.parse(await readFile(resolve(cwd, 'package.json'), 'utf8'))
     if (!manifest.private && manifest.version) {
-      const recommendation = await new Bumper(root)
+      const manifestPath = relative(root, resolve(cwd, 'package.json'))
+      const lastManifestCommit = run('git', [
+        'log',
+        '-1',
+        '--format=%s',
+        releaseBaseSha,
+        '--',
+        manifestPath,
+      ])
+      requireCondition(
+        lastManifestCommit !== commitSubject ||
+          remoteTagCommit(`${workspace.name}@${manifest.version}`) !== undefined,
+        `Previous release is untagged; retry it before releasing ${workspace.name}`
+      )
+      const bumper = new Bumper(root)
         .config(preset)
-        .commits({ ...range, path: workspace.location })
-        .bump(preset.whatBump)
+        .tag({ prefix: `${workspace.name}@`, to: releaseBaseSha })
+        .commits({ to: releaseBaseSha, path: workspace.location })
+      const previousTag = await bumper.getLastSemverTag()
+      if (!previousTag && baselineTag) bumper.tag(baselineTag)
+      if (
+        !previousTag &&
+        !baselineTag &&
+        run('git', ['ls-tree', '--name-only', previousMaster, '--', manifestPath])
+      ) {
+        const previousManifest = JSON.parse(
+          run('git', ['show', revisionFile(previousMaster, relative(root, cwd), 'package.json')])
+        )
+        requireCondition(
+          previousManifest.private || !previousManifest.version,
+          `Existing public workspace has no release tag: ${workspace.name}`
+        )
+      }
+      const recommendation = await bumper.bump(preset.whatBump)
       const releaseType =
         recommendation.releaseType ?? (recommendation.commits.length > 0 ? 'patch' : undefined)
 
       if (releaseType) {
         run('yarn', ['workspace', workspace.name, 'version', releaseType, '--deferred'])
         targets.push(workspace.name)
+        fromTags.set(workspace.name, previousTag || baselineTag)
       }
     }
   }
-  return { range, manifests, targets }
+  return { manifests, targets, fromTags }
 }
 
 async function main() {
@@ -190,7 +213,19 @@ async function main() {
   )
   requireCondition(run('git', ['status', '--porcelain']) === '', 'Release checkout must be clean')
 
-  const { range: releaseRange, manifests, targets } = await deferChangedWorkspaceVersions()
+  const currentRemote = remoteSha()
+  let previousRelease
+  let releaseBaseSha = acceptedSha
+  if (currentRemote !== acceptedSha) {
+    run('git', ['fetch', 'origin', currentRemote])
+    previousRelease = deliveredReleaseSha(currentRemote)
+    if (!previousRelease) {
+      releaseBaseSha = currentRemote
+      run('git', ['checkout', '--detach', releaseBaseSha], { stdio: 'inherit' })
+    }
+  }
+
+  const { manifests, targets, fromTags } = await deferChangedWorkspaceVersions(releaseBaseSha)
   const preview = targets.flatMap((name) =>
     records(run('yarn', ['workspace', name, 'version', 'apply', '--dry-run', '--json']))
   )
@@ -211,6 +246,7 @@ async function main() {
           cwd,
           path: relative(root, cwd),
           manifest,
+          fromTag: fromTags.get(record.ident),
         })
       }
     }
@@ -226,9 +262,10 @@ async function main() {
       type.effect === 'hidden' ? { ...type, effect: 'changelog' } : type
     ),
   })
-  const releaseDate = run('git', ['show', '-s', '--format=%cs', acceptedSha])
+  const releaseDate = run('git', ['show', '-s', '--format=%cs', releaseBaseSha])
   requireCondition(/^\d{4}-\d{2}-\d{2}$/.test(releaseDate), 'Invalid accepted commit date')
-  for (const plan of plans) plan.notes = await releaseNotes(plan, preset, releaseDate, releaseRange)
+  for (const plan of plans)
+    plan.notes = await releaseNotes(plan, preset, releaseDate, releaseBaseSha)
   process.stdout.write(
     `${JSON.stringify(
       plans.map(({ name, oldVersion, newVersion, path }) => ({
@@ -255,9 +292,8 @@ async function main() {
   )
   requireCondition(process.env.RUNNER_TEMP, 'Runner temporary directory is required')
 
-  const currentRemote = remoteSha()
   let releaseSha
-  if (currentRemote === acceptedSha) {
+  if (!previousRelease) {
     const applied = targets.flatMap((name) =>
       records(run('yarn', ['workspace', name, 'version', 'apply', '--json']))
     )
@@ -297,12 +333,11 @@ async function main() {
       commitSubject,
     ])
     releaseSha = run('git', ['rev-parse', 'HEAD'])
-    requireCondition(remoteSha() === acceptedSha, 'Master moved before publication')
+    requireCondition(remoteSha() === releaseBaseSha, 'Master moved before publication')
     run('git', ['push', 'origin', `HEAD:refs/heads/${branch}`], { stdio: 'inherit' })
     requireCondition(remoteSha() === releaseSha, 'Release commit was not delivered to master')
   } else {
-    run('git', ['fetch', 'origin', currentRemote])
-    releaseSha = deliveredReleaseSha(currentRemote)
+    releaseSha = previousRelease
     for (const plan of plans) {
       const manifest = JSON.parse(
         run('git', ['show', revisionFile(releaseSha, plan.path, 'package.json')])
