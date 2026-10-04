@@ -1,0 +1,82 @@
+name: Publish versioned Yarn workspaces
+description: Publish one committed release using Yarn, Conventional Changelog, and GitHub
+
+inputs:
+  pattern:
+    required: true
+    description: Yarn include pattern for versioned workspaces
+  releaseCommit:
+    required: true
+    description: Commit containing the applied package versions and changelogs
+  sourceCommit:
+    required: true
+    description: Source commit whose changes are described by this release
+  releaseBase:
+    required: true
+    description: Git base for package changelogs
+  registryServer:
+    required: true
+    description: npm registry URL
+  packageAccess:
+    required: true
+    description: npm package access
+  githubToken:
+    required: true
+    description: GitHub App token
+  npmAuthToken:
+    required: true
+    description: npm registry token
+
+runs:
+  using: composite
+  steps:
+    - name: Publish packages
+      shell: bash
+      env:
+        RELEASE_PATTERN: ${{ inputs.pattern }}
+        RELEASE_ACCESS: ${{ inputs.packageAccess }}
+        YARN_NPM_AUTH_TOKEN: ${{ inputs.npmAuthToken }}
+        YARN_NPM_REGISTRY_SERVER: ${{ inputs.registryServer }}
+        YARN_NPM_PUBLISH_REGISTRY: ${{ inputs.registryServer }}
+      run: yarn workspaces foreach -A --no-private --include "$RELEASE_PATTERN" --topological npm publish --tolerate-republish --access "$RELEASE_ACCESS"
+
+    - name: Verify registry metadata
+      shell: bash
+      env:
+        RELEASE_PATTERN: ${{ inputs.pattern }}
+        RELEASE_COMMIT: ${{ inputs.releaseCommit }}
+        YARN_NPM_AUTH_TOKEN: ${{ inputs.npmAuthToken }}
+        YARN_NPM_REGISTRY_SERVER: ${{ inputs.registryServer }}
+      run: |
+        # shellcheck disable=SC2016
+        yarn workspaces foreach -A --no-private --include "$RELEASE_PATTERN" exec sh -c '
+          set -eu
+          metadata=$(yarn npm info "$npm_package_name@$npm_package_version" --json)
+          printf "%s\n" "$metadata" | jq -e --arg name "$npm_package_name" --arg version "$npm_package_version" --arg sha "$RELEASE_COMMIT" ".name == \$name and .version == \$version and .gitHead == \$sha" > /dev/null
+        '
+
+    - name: Create package releases
+      shell: bash
+      env:
+        RELEASE_PATTERN: ${{ inputs.pattern }}
+        RELEASE_COMMIT: ${{ inputs.releaseCommit }}
+        RELEASE_SOURCE: ${{ inputs.sourceCommit }}
+        RELEASE_BASE: ${{ inputs.releaseBase }}
+        RELEASE_NOTES: conventional-changelog@8.1.3
+        RELEASE_PRESET: conventional-changelog-conventionalcommits@10.4.0
+        GITHUB_TOKEN: ${{ inputs.githubToken }}
+      run: |
+        # shellcheck disable=SC2016
+        yarn workspaces foreach -A --no-private --include "$RELEASE_PATTERN" exec sh -c '
+          set -eu
+          tag="$npm_package_name@$npm_package_version"
+          existing_tag=$(git rev-parse -q --verify "refs/tags/$tag^{commit}" 2>/dev/null || true)
+          test -z "$existing_tag" || test "$existing_tag" = "$RELEASE_COMMIT"
+          existing_release=$(gh release view "$tag" --json targetCommitish --jq .targetCommitish 2>/dev/null || true)
+          if [ -n "$existing_release" ]; then
+            test "$existing_release" = "$RELEASE_COMMIT"
+          else
+            notes=$(npm exec --yes --package="$RELEASE_NOTES" --package="$RELEASE_PRESET" -- conventional-changelog --preset conventionalcommits --pkg package.json --commit-path . --from "$RELEASE_BASE" --to "$RELEASE_SOURCE" --stdout)
+            gh release create "$tag" --target "$RELEASE_COMMIT" --title "$tag" --notes "$notes"
+          fi
+        '

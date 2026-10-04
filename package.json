@@ -5,8 +5,12 @@
   "type": "module",
   "workspaces": [
     "scripts/**/*",
-    ".github/actions/release/semantic-release"
+    ".github/actions/release/semantic-release",
+    ".github/actions/release/workspace-decisions"
   ],
+  "resolutions": {
+    "@yarnpkg/core": "4.9.1"
+  },
   "devDependencies": {
     "@atls/code-runtime": "2.1.9",
     "@jest/core": "29.7.0",

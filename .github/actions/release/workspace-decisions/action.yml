@@ -1,0 +1,36 @@
+name: Resolve Yarn workspace version decisions
+description: Find changed workspaces and complete dependent decisions using Yarn's version plugin
+
+inputs:
+  baseRef:
+    description: Git ref used by Yarn to find changed workspaces
+    required: true
+  phase:
+    description: Select changed workspaces or resolve dependent workspaces
+    required: true
+
+outputs:
+  pattern:
+    description: Yarn include pattern for public workspaces selected by this action
+    value: ${{ steps.select.outputs.pattern }}
+  privatePattern:
+    description: Yarn include pattern for declined private dependents
+    value: ${{ steps.select.outputs.privatePattern }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install shared release tools
+      shell: bash
+      working-directory: ${{ github.action_path }}/../../../..
+      run: yarn install --immutable --inline-builds
+
+    - name: Resolve workspace decisions
+      id: select
+      shell: bash
+      working-directory: ${{ github.action_path }}/../../../..
+      env:
+        YARN_CHANGESET_BASE_REFS: ${{ inputs.baseRef }}
+        RELEASE_PROJECT_CWD: ${{ github.workspace }}
+        RELEASE_DECISIONS_PHASE: ${{ inputs.phase }}
+      run: yarn workspace @atls/shared-workspace-decisions node src/select.mjs >> "$GITHUB_OUTPUT"
