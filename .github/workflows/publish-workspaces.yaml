@@ -1,0 +1,136 @@
+name: Reusable workspace publish
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node version to run this workflow. Default: 24'
+        default: '24'
+        required: false
+        type: string
+      clientId:
+        required: true
+        type: string
+        description: GitHub App client ID for committing changes
+      registryServer:
+        required: false
+        type: string
+        default: 'https://registry.npmjs.org'
+        description: Where to send the package
+      packageAccess:
+        description: Access level for published packages
+        required: false
+        type: string
+        default: public
+    secrets:
+      appPrivateKey:
+        required: true
+      npmAuthToken:
+        required: true
+
+concurrency:
+  group: publish-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish packages
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_BASE: ${{ github.event.pull_request.base.sha }}
+    outputs:
+      packages: ${{ steps.packages.outputs.packages }}
+      target: ${{ steps.commit.outputs.commit-hash || github.event.pull_request.merge_commit_sha }}
+
+    steps:
+      - uses: actions/create-github-app-token@v3.2.0
+        id: app-token
+        with:
+          client-id: ${{ inputs.clientId }}
+          private-key: ${{ secrets.appPrivateKey }}
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: yarn
+
+      - name: Install
+        run: yarn install --immutable --inline-builds
+
+      - name: Infer version decisions
+        run: yarn release version infer
+
+      - name: Apply versions
+        run: yarn version apply --all
+
+      - name: Select release packages
+        id: packages
+        run: |
+          packages=$(yarn workspaces list --json --since="$RELEASE_BASE" --no-private | jq -sc .)
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+
+      - name: Publish packages
+        run: yarn workspaces foreach --since="$RELEASE_BASE" -t --no-private npm publish --tolerate-republish --access "$PACKAGE_ACCESS"
+        env:
+          PACKAGE_ACCESS: ${{ inputs.packageAccess }}
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
+          YARN_NPM_REGISTRY_SERVER: ${{ inputs.registryServer }}
+          YARN_NPM_PUBLISH_REGISTRY: ${{ inputs.registryServer }}
+
+      - name: Commit versions
+        id: commit
+        uses: planetscale/ghcommit-action@v0.2.20
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        with:
+          repo: ${{ github.repository }}
+          branch: master
+          commit_message: 'chore(release): publish workspace versions'
+          file_pattern: '*.json *.yaml *.yml *.lock .pnp.cjs .pnp.loader.mjs'
+
+  releases:
+    needs: publish
+    if: needs.publish.outputs.packages != '[]'
+    name: Release ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.publish.outputs.packages) }}
+
+    steps:
+      - uses: actions/create-github-app-token@v3.2.0
+        id: app-token
+        with:
+          client-id: ${{ inputs.clientId }}
+          private-key: ${{ secrets.appPrivateKey }}
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.publish.outputs.target }}
+
+      - name: Package version
+        id: version
+        env:
+          PACKAGE_DIR: ${{ matrix.location }}
+        run: |
+          version=$(jq -er .version "$PACKAGE_DIR/package.json")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1.21.0
+        with:
+          tag: ${{ matrix.name }}@${{ steps.version.outputs.version }}
+          commit: ${{ needs.publish.outputs.target }}
+          generateReleaseNotes: true
+          skipIfReleaseExists: true
+          token: ${{ steps.app-token.outputs.token }}
