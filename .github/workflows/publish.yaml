@@ -28,10 +28,20 @@ on:
       npmAuthToken:
         required: true
 
+concurrency:
+  group: publish-${{ github.repository }}
+  queue: max
+  cancel-in-progress: false
+
 jobs:
-  run:
-    name: Publish
+  publish:
+    name: Publish packages
     runs-on: ubuntu-latest
+    env:
+      RELEASE_BASE: ${{ github.event.pull_request.base.sha }}
+    outputs:
+      packages: ${{ steps.packages.outputs.packages }}
+      target: ${{ steps.commit.outputs.commit-hash || github.event.pull_request.merge_commit_sha }}
 
     steps:
       - uses: actions/create-github-app-token@v3.2.0
@@ -51,93 +61,77 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: ${{ inputs.node-version }}
-
-      - name: Yarn cache directory
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v6
-        id: yarn-cache
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
+          cache: yarn
 
       - name: Install
-        run: yarn install --inline-builds
+        run: yarn install --immutable --inline-builds
 
-      - name: List changed workspaces
-        run: yarn workspaces changed list --json
+      - name: Infer version decisions
+        run: yarn release version infer
 
-      - name: Defer versions
-        run: yarn release version defer
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-
-      - name: Version
+      - name: Apply versions
         run: yarn version apply --all
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Debug git diff
+      - name: Select release packages
+        id: packages
         run: |
-          git diff
+          packages=$(yarn workspaces list --json --since="$RELEASE_BASE" --no-private | jq -sc .)
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
 
-      - name: Changelog
-        if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . changelog generate
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Debug git diff
-        run: |
-          git diff
-
-      - name: Release
-        if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . release create
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Npm Publish
-        if: ${{ !cancelled() }}
-        run: yarn workspaces changed foreach -v --no-private --exclude . npm publish --tolerate-republish --access "$PACKAGE_ACCESS"
+      - name: Publish packages
+        run: yarn workspaces foreach --since="$RELEASE_BASE" -t --no-private npm publish --tolerate-republish --access "$PACKAGE_ACCESS"
         env:
           PACKAGE_ACCESS: ${{ inputs.packageAccess }}
           YARN_NPM_AUTH_TOKEN: ${{ secrets.npmAuthToken }}
           YARN_NPM_REGISTRY_SERVER: ${{ inputs.registryServer }}
           YARN_NPM_PUBLISH_REGISTRY: ${{ inputs.registryServer }}
 
-      - name: Compose commit message
-        if: ${{ !cancelled() }}
-        id: commit_message
-        run: |
-          INITIAL_MESSAGE=$'chore(common): versions\n\n'
-          temp_file=$(mktemp)
-          yarn workspaces changed foreach -v --exclude . exec "echo \"\$npm_package_name:\$npm_package_version \" >> $temp_file"
-          MESSAGE=$(cat $temp_file)
-          echo $(cat $temp_file)
-          INITIAL_MESSAGE+=$MESSAGE
-          INITIAL_MESSAGE="${INITIAL_MESSAGE//'%'/' '}"
-          INITIAL_MESSAGE="${INITIAL_MESSAGE//$'\n'/' '}"
-          INITIAL_MESSAGE="${INITIAL_MESSAGE//$'\r'/' '}"
-          echo "commitMessage=$INITIAL_MESSAGE" >> $GITHUB_OUTPUT
-          echo $INITIAL_MESSAGE
-          rm $temp_file
-
-      - name: Stage all changelog files
-        if: ${{ !cancelled() }}
-        run: |
-          git add '*.md'
-
-      - name: Commit changes
-        if: ${{ !cancelled() }}
+      - name: Commit versions
+        id: commit
         uses: planetscale/ghcommit-action@v0.2.20
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           repo: ${{ github.repository }}
           branch: master
-          commit_message: ${{ steps.commit_message.outputs.commitMessage }}
-          file_pattern: '*.json *.md *.yaml *.yml *.lock'
+          commit_message: 'chore(release): publish workspace versions'
+          file_pattern: '*.json *.yaml *.yml *.lock .pnp.cjs .pnp.loader.mjs'
+
+  releases:
+    needs: publish
+    if: needs.publish.outputs.packages != '[]'
+    name: Release ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.publish.outputs.packages) }}
+
+    steps:
+      - uses: actions/create-github-app-token@v3.2.0
+        id: app-token
+        with:
+          client-id: ${{ inputs.clientId }}
+          private-key: ${{ secrets.appPrivateKey }}
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.publish.outputs.target }}
+
+      - name: Package version
+        id: version
+        env:
+          PACKAGE_DIR: ${{ matrix.location }}
+        run: |
+          version=$(jq -er .version "$PACKAGE_DIR/package.json")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1.21.0
+        with:
+          tag: ${{ matrix.name }}@${{ steps.version.outputs.version }}
+          commit: ${{ needs.publish.outputs.target }}
+          generateReleaseNotes: true
+          skipIfReleaseExists: true
+          token: ${{ steps.app-token.outputs.token }}
