@@ -4,174 +4,124 @@ on:
   workflow_call:
     inputs:
       registryURL:
-        description: 'Where to publish built docker image. Github - `ghcr.io`. Yandex - `cr.yandex`'
+        description: Image registry host
         required: true
         type: string
       registryUser:
-        description: 'How to authenticate user. For yandex - `oauth`, `iam`, `json_key`. For GitHub - repo owner'
-        type: string
+        description: Registry login user
         required: true
+        type: string
       project:
-        description: 'Project name for publishing to registry. For GitHub - repo name.'
-        type: string
+        description: Registry namespace or registry ID
         required: false
+        type: string
       imageNamePrefix:
-        description: 'Image name prefix'
+        description: Prefix before the normalized workspace image name
         required: false
         type: string
-      nodeVersion:
-        description: 'Node version to run this workflow. Default: 24'
-        default: '24'
-        required: false
-        type: string
-      escapeCharactersInKey:
-        required: false
-        default: true
-        type: boolean
-        description: 'Login via echo -e. Default: true'
       include:
+        description: Comma-separated Yarn workspace names or globs
         required: false
         type: string
-        description: 'A comma-separated list of workspace names or glob patterns to include in the build. If provided, only these packages will be processed.'
       exclude:
+        description: Comma-separated Yarn workspace names or globs
         required: false
         type: string
-        description: 'A comma-separated list of workspace names or glob patterns to exclude from the build. If provided, these packages will be skipped.'
       tagPolicy:
+        description: Revision or timestamp tag policy
+        default: hash-timestamp
         required: false
-        default: 'hash-timestamp'
         type: string
-        description: 'Raijin image tag policy.'
+      builder:
+        description: Pack builder image
+        default: ghcr.io/atls/builder-base:24
+        required: false
+        type: string
+      buildpack:
+        description: Pack buildpack image
+        default: ghcr.io/atls/buildpack-yarn-workspace:24
+        required: false
+        type: string
     secrets:
       registryKey:
         required: true
-        description: 'Login key for registry'
+        description: Registry login key
       project:
         required: false
-        description: 'Project name for publishing to registry. For GitHub - repo name.'
-      runtimeEnv:
+        description: Registry namespace or registry ID
+      buildEnv:
         required: false
-        description: 'Optional dotenv-style KEY=value lines exported before image pack.'
+        description: Build-time variables passed only to Pack
 
 jobs:
-  run:
+  select:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
     steps:
-      - name: Validate inputs - include and exclude
-        if: ${{ inputs.include && inputs.exclude }}
-        run: |
-          echo "Error: You cannot specify both 'include' and 'exclude' at the same time."
-          exit 1
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Select image targets
+        id: targets
+        uses: atls/buildpacks/buildpacks/image-targets@buildpack-root-1.1.2
+        with:
+          base: ${{ github.event.before }}
+          include: ${{ inputs.include }}
+          exclude: ${{ inputs.exclude }}
+
+  publish:
+    needs: select
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include: ${{ fromJSON(needs.select.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Image metadata
+        id: metadata
+        uses: docker/metadata-action@v6.2.0
+        with:
+          context: git
+          images: ${{ inputs.registryURL }}/${{ secrets.project != '' && secrets.project || inputs.project }}/${{ inputs.imageNamePrefix }}${{ matrix.imageName }}
+          flavor: latest=false
+          tags: |
+            type=sha,format=long,prefix=,enable=${{ inputs.tagPolicy == 'revision' }},priority=300
+            type=raw,value={{sha}}-{{date 'x'}},enable=${{ inputs.tagPolicy == 'hash-timestamp' }},priority=300
+            type=raw,value=${{ github.event.pull_request.number || github.event.issue.number || 'local' }}-{{sha}}-{{date 'x'}},enable=${{ inputs.tagPolicy == 'ctx-hash-timestamp' }},priority=300
+            type=raw,value=latest,priority=100
 
       - name: Login to registry
-        env:
-          REGISTRY_KEY: ${{ secrets.registryKey }}
-          USERNAME: ${{ inputs.registryUser }}
-          REGISTRY_URL: ${{ inputs.registryURL }}
-          ESCAPE_CHARACTERS: ${{ inputs.escapeCharactersInKey }}
-        run: |
-          printf '%s' "$REGISTRY_KEY" | docker login "$REGISTRY_URL" -u "$USERNAME" --password-stdin
-
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: docker/login-action@v4.6.0
         with:
-          node-version: ${{ inputs.nodeVersion }}
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Yarn cache directory
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/cache@v6
-        id: yarn-cache
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Yarn install
-        run: yarn install --inline-builds
-        env:
-          SKILLS_NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Export runtime environment
-        env:
-          RUNTIME_ENV: ${{ secrets.runtimeEnv }}
-        run: |
-          while IFS= read -r line || [ -n "$line" ]; do
-            line="${line%$'\r'}"
-
-            if [ -z "$line" ] || [[ "$line" == \#* ]]; then
-              continue
-            fi
-
-            if [[ "$line" != *=* ]]; then
-              echo "Invalid runtime env line: expected KEY=value"
-              exit 1
-            fi
-
-            value="${line#*=}"
-
-            if [ -n "$value" ]; then
-              echo "::add-mask::$value"
-            fi
-
-            echo "$line" >> "$GITHUB_ENV"
-          done <<< "$RUNTIME_ENV"
+          registry: ${{ inputs.registryURL }}
+          username: ${{ inputs.registryUser }}
+          password: ${{ secrets.registryKey }}
 
       - name: Setup Pack
-        uses: buildpacks/github-actions/setup-pack@v5.10.0
+        uses: buildpacks/github-actions/setup-pack@v6.1.1
+        with:
+          pack-version: 0.40.9
 
-      - name: Pack and publish
-        if: ${{ !inputs.include && !inputs.exclude }}
+      - name: Build and publish
+        uses: atls/buildpacks/buildpacks/publish-image@buildpack-root-1.2.0
+        with:
+          image: ${{ fromJSON(steps.metadata.outputs.json).tags[0] }}
+          latestImage: ${{ fromJSON(steps.metadata.outputs.json).tags[1] }}
+          workspace: ${{ matrix.workspace }}
+          builder: ${{ inputs.builder }}
+          buildpack: ${{ inputs.buildpack }}
+          buildEnv: ${{ secrets.buildEnv }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REGISTRY_URL: ${{ inputs.registryURL }}
-          PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
-          IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
-        run: |
-          PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
-
-          yarn workspaces changed foreach --verbose --parallel --jobs 2 image pack --publish --tag-policy "${{ inputs.tagPolicy }}" --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
-
-      - name: Pack and publish included packages
-        if: ${{ inputs.include }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REGISTRY_URL: ${{ inputs.registryURL }}
-          PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
-          IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
-        run: |
-          PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
-
-          IFS=',' read -r -a include_array <<< "${{ inputs.include }}"
-          INCLUDE_FLAGS=()
-          for ws in "${include_array[@]}"; do
-            INCLUDE_FLAGS+=(--include "$ws")
-          done
-
-          yarn workspaces foreach --all "${INCLUDE_FLAGS[@]}" image pack --publish --tag-policy "${{ inputs.tagPolicy }}" --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
-
-      - name: Pack and publish without excluded
-        if: ${{ !inputs.include && inputs.exclude }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REGISTRY_URL: ${{ inputs.registryURL }}
-          PROJECT: ${{ secrets.project != '' && secrets.project || inputs.project }}
-          IMAGE_NAME_PREFIX: ${{ inputs.imageNamePrefix }}
-        run: |
-          PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
-
-          IFS=',' read -r -a include_array <<< "${{ inputs.exclude }}"
-          EXCLUDE_FLAGS=()
-          for ws in "${include_array[@]}"; do
-            EXCLUDE_FLAGS+=(--exclude "$ws")
-          done
-
-          yarn workspaces foreach --all "${EXCLUDE_FLAGS[@]}" image pack --publish --tag-policy "${{ inputs.tagPolicy }}" --registry "$REGISTRY_URL/$PROJECT_LOWER/$IMAGE_NAME_PREFIX"
+          SKILLS_NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
