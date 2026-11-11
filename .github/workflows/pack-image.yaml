@@ -27,6 +27,10 @@ on:
         description: Comma-separated Yarn workspace names or globs
         required: false
         type: string
+      arm64Workspace:
+        description: Exact Yarn workspace name to build on a native Linux ARM64 runner
+        required: false
+        type: string
       tagPolicy:
         description: Revision or timestamp tag policy
         default: hash-timestamp
@@ -79,7 +83,7 @@ jobs:
 
   publish:
     needs: select
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.arm64Workspace != '' && matrix.workspace == inputs.arm64Workspace && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       max-parallel: 2
