@@ -33,8 +33,44 @@ on:
         default: 'yarn check --verify'
         required: false
         type: string
+      build-images:
+        description: Verify container images with Pack on pull requests
+        type: boolean
+        default: false
+      image-include:
+        description: Workspace selection from the publishing workflow
+        type: string
+        default: ''
+      image-exclude:
+        description: Workspace exclusion from the publishing workflow
+        type: string
+        default: ''
+      image-name-prefix:
+        description: Image name prefix from the publishing workflow
+        type: string
+        default: ''
+      image-arm64-workspace:
+        description: Workspace that builds on a native ARM64 runner
+        type: string
+        default: ''
 
 jobs:
+  images:
+    if: inputs.build-images && github.event_name == 'pull_request'
+    uses: ./.github/workflows/pack-image.yaml
+    permissions:
+      contents: read
+      packages: read
+    with:
+      publish: false
+      registryURL: ghcr.io
+      registryUser: ${{ github.repository_owner }}
+      project: ${{ github.repository_owner }}
+      include: ${{ inputs.image-include != '' && inputs.image-include || (inputs.image-exclude == '' && '**' || '') }}
+      exclude: ${{ inputs.image-exclude }}
+      imageNamePrefix: ${{ inputs.image-name-prefix }}
+      arm64Workspace: ${{ inputs.image-arm64-workspace }}
+
   checks:
     name: Checks
     runs-on: ubuntu-latest
