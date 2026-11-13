@@ -1,11 +1,19 @@
-name: Reusable semantic package publication
+name: Reusable semantic release
 
 on:
   workflow_call:
     inputs:
+      mode:
+        description: npm package publication or GitHub Release using the project release config
+        default: npm
+        type: string
+      python-version:
+        description: Python version for uv in GitHub Release mode
+        default: ''
+        type: string
       packageName:
-        description: Public Yarn workspace package name
-        required: true
+        description: Public Yarn workspace package name for npm mode
+        required: false
         type: string
       clientId:
         description: GitHub App client ID
@@ -50,15 +58,12 @@ on:
       appPrivateKey:
         required: true
       npmAuthToken:
-        required: true
+        required: false
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
     steps:
       - name: Create GitHub App token
         uses: actions/create-github-app-token@v3.2.0
@@ -79,10 +84,18 @@ jobs:
         with:
           node-version-file: ${{ inputs.node-version-file }}
 
+      - name: Setup uv
+        if: inputs.mode == 'github' && inputs.python-version != ''
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ inputs.python-version }}
+
       - name: Install
+        if: inputs.mode == 'npm'
         run: yarn install --immutable --inline-builds
 
-      - name: Release package
+      - name: Publish npm package
+        if: inputs.mode == 'npm'
         uses: atls/shared/.github/actions/release/semantic-release@master
         with:
           packageName: ${{ inputs.packageName }}
@@ -96,3 +109,18 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           GITHUB_PACKAGES_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.npmAuthToken }}
+
+      - name: Publish GitHub release
+        if: inputs.mode == 'github'
+        uses: cycjimmy/semantic-release-action@ad51787758d9654d5a75150a89a6fa9b3ccef95e # v8.1.4
+        with:
+          semantic_version: '25.0.9'
+          working_directory: ${{ github.workspace }}
+          dry_run: ${{ inputs.dryRun }}
+          extra_plugins: |
+            conventional-changelog-conventionalcommits@9.3.1
+            @semantic-release/exec@7.1.0
+            @semantic-release/git@10.0.1
+            @semantic-release/github@12.0.9
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
