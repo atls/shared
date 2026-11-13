@@ -198,6 +198,7 @@ const RAW_RUNTIME_STATE =
           ["@atls/shared-semantic-release", "workspace:.github/actions/release/semantic-release"],\
           ["@semantic-release/commit-analyzer", "virtual:b425f36ee3bd36ed7ce4329b08a91c18dbc73cc7eceef2f3da89e2f96df3f3a43d79e52bc3471cdd8fa6fd06a59f1ffd54eb6d8a3771d0b6304b2b66fa2d0f29#npm:13.0.1"],\
           ["@semantic-release/exec", "virtual:17d5c2bc7bdfc212680e1890816e10330a3adab5558efb6126ffeb75563b4bc5e8a20053e5cdd15ffb1b0b13eaf9493d23e3cde960e89ca5382f3f2dd71db91d#npm:7.1.0"],\
+          ["@semantic-release/git", "virtual:17d5c2bc7bdfc212680e1890816e10330a3adab5558efb6126ffeb75563b4bc5e8a20053e5cdd15ffb1b0b13eaf9493d23e3cde960e89ca5382f3f2dd71db91d#npm:10.0.1"],\
           ["@semantic-release/github", "virtual:17d5c2bc7bdfc212680e1890816e10330a3adab5558efb6126ffeb75563b4bc5e8a20053e5cdd15ffb1b0b13eaf9493d23e3cde960e89ca5382f3f2dd71db91d#npm:12.0.9"],\
           ["@semantic-release/release-notes-generator", "virtual:b425f36ee3bd36ed7ce4329b08a91c18dbc73cc7eceef2f3da89e2f96df3f3a43d79e52bc3471cdd8fa6fd06a59f1ffd54eb6d8a3771d0b6304b2b66fa2d0f29#npm:14.1.1"],\
           ["conventional-changelog-conventionalcommits", "npm:9.3.1"],\
@@ -2451,6 +2452,13 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["@semantic-release/error", [\
+      ["npm:3.0.0", {\
+        "packageLocation": "../.yarn/berry/cache/@semantic-release-error-npm-3.0.0-238eebf38b-10.zip/node_modules/@semantic-release/error/",\
+        "packageDependencies": [\
+          ["@semantic-release/error", "npm:3.0.0"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
       ["npm:4.0.0", {\
         "packageLocation": "../.yarn/berry/cache/@semantic-release-error-npm-4.0.0-8491f5d82c-10.zip/node_modules/@semantic-release/error/",\
         "packageDependencies": [\
@@ -2478,6 +2486,36 @@ const RAW_RUNTIME_STATE =
           ["execa", "npm:9.6.1"],\
           ["lodash-es", "npm:4.18.1"],\
           ["parse-json", "npm:8.3.0"],\
+          ["semantic-release", "npm:25.0.9"]\
+        ],\
+        "packagePeers": [\
+          "@types/semantic-release",\
+          "semantic-release"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@semantic-release/git", [\
+      ["npm:10.0.1", {\
+        "packageLocation": "../.yarn/berry/cache/@semantic-release-git-npm-10.0.1-2fa2e024e6-10.zip/node_modules/@semantic-release/git/",\
+        "packageDependencies": [\
+          ["@semantic-release/git", "npm:10.0.1"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:17d5c2bc7bdfc212680e1890816e10330a3adab5558efb6126ffeb75563b4bc5e8a20053e5cdd15ffb1b0b13eaf9493d23e3cde960e89ca5382f3f2dd71db91d#npm:10.0.1", {\
+        "packageLocation": "./.yarn/__virtual__/@semantic-release-git-virtual-6f71ed8d16/2/.yarn/berry/cache/@semantic-release-git-npm-10.0.1-2fa2e024e6-10.zip/node_modules/@semantic-release/git/",\
+        "packageDependencies": [\
+          ["@semantic-release/git", "virtual:17d5c2bc7bdfc212680e1890816e10330a3adab5558efb6126ffeb75563b4bc5e8a20053e5cdd15ffb1b0b13eaf9493d23e3cde960e89ca5382f3f2dd71db91d#npm:10.0.1"],\
+          ["@semantic-release/error", "npm:3.0.0"],\
+          ["@types/semantic-release", null],\
+          ["aggregate-error", "npm:3.1.0"],\
+          ["debug", "virtual:e5a68e66e61c28ba8fcce7f8ce38ef829d42728b97243d64a06e24fd15823e9bcb3f5a81a0473d2019bc3e22ca5c6a8f3cf8f4ab53bb42dc8844e39b4517e226#npm:4.4.3"],\
+          ["dir-glob", "npm:3.0.1"],\
+          ["execa", "npm:5.1.1"],\
+          ["lodash", "npm:4.18.1"],\
+          ["micromatch", "npm:4.0.5"],\
+          ["p-reduce", "npm:2.1.0"],\
           ["semantic-release", "npm:25.0.9"]\
         ],\
         "packagePeers": [\
@@ -9158,6 +9196,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["lodash", [\
+      ["npm:4.18.1", {\
+        "packageLocation": "../.yarn/berry/cache/lodash-npm-4.18.1-a64c3070ac-10.zip/node_modules/lodash/",\
+        "packageDependencies": [\
+          ["lodash", "npm:4.18.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["lodash-es", [\
       ["npm:4.18.1", {\
         "packageLocation": "../.yarn/berry/cache/lodash-es-npm-4.18.1-02cf41b912-10.zip/node_modules/lodash-es/",\
@@ -10498,6 +10545,13 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["p-reduce", [\
+      ["npm:2.1.0", {\
+        "packageLocation": "../.yarn/berry/cache/p-reduce-npm-2.1.0-f5593a333c-10.zip/node_modules/p-reduce/",\
+        "packageDependencies": [\
+          ["p-reduce", "npm:2.1.0"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
       ["npm:3.0.0", {\
         "packageLocation": "../.yarn/berry/cache/p-reduce-npm-3.0.0-a4e7df18a7-10.zip/node_modules/p-reduce/",\
         "packageDependencies": [\
