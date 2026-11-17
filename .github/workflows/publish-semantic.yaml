@@ -89,6 +89,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ inputs.python-version }}
+          enable-cache: false
 
       - name: Install
         if: inputs.mode == 'npm'
