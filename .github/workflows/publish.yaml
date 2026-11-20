@@ -26,7 +26,7 @@ on:
       appPrivateKey:
         required: true
       npmAuthToken:
-        required: true
+        required: false
 
 concurrency:
   group: publish-${{ github.repository }}
